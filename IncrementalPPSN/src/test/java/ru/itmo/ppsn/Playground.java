@@ -2,9 +2,9 @@ package ru.itmo.ppsn;
 
 import org.junit.Ignore;
 import org.junit.Test;
-import ru.itmo.iyakupov.MedianOfMediansQS;
+import ru.itmo.util.MedianOfMediansQS;
 import ru.itmo.nds.PPSN2014;
-import ru.itmo.iyakupov.QuickSelect;
+import ru.itmo.util.QuickSelect;
 import ru.itmo.mbuzdalov.FasterNonDominatedSorting;
 import ru.itmo.mbuzdalov.sorters.MergeSorter;
 import ru.itmo.mbuzdalov.sorters.Sorter;

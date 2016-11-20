@@ -1,7 +1,6 @@
 package ru.itmo.nds;
 
-import ru.itmo.iyakupov.MedianOfMediansQS;
-import ru.itmo.iyakupov.QuickSelect;
+import ru.itmo.util.QuickSelect;
 
 import java.util.*;
 import java.util.stream.Collectors;
