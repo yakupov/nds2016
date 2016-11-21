@@ -84,23 +84,45 @@ public class PPSN2014 {
                         kth[i] = pop[workingSet.get(i)][k];
                     }
                     final double median = new QuickSelect().getMedian(kth);
-                    //printSpaces(level);
-                    //System.out.println(" Split by median " + median);
+//                    printSpaces(level);
+//                    System.out.println(" Split by median " + median);
 
                     final List<Integer> l = new ArrayList<>();
                     final List<Integer> m = new ArrayList<>();
                     final List<Integer> h = new ArrayList<>();
                     split(pop, k, median, workingSet, l, m, h);
 
+//                    printSpaces(level);
+//                    System.out.println("SPLIT A LMH");
+//                    printSpaces(level);
+//                    System.out.println(l);
+//                    printSpaces(level);
+//                    System.out.println(m);
+//                    printSpaces(level);
+//                    System.out.println(h);
+//                    printSpaces(level);
+//                    System.out.println(Arrays.toString(ranks));
+
+                    final List<Integer> lm = new ArrayList<>(l.size() + m.size());
+                    int lIndex = 0;
+                    int mIndex = 0;
+                    while (lIndex < l.size() || mIndex < m.size()) {
+                        if (lIndex == l.size()) {
+                            lm.add(m.get(mIndex++));
+                        } else if (mIndex == m.size()) {
+                            lm.add(l.get(lIndex++));
+                        } else if (l.get(lIndex) <= m.get(mIndex)) {
+                            lm.add(l.get(lIndex++));
+                        } else {
+                            lm.add(m.get(mIndex++));
+                        }
+                    }
+
                     ndHelperA(pop, ranks, k, l, level + 1);
                     ndHelperB(pop, ranks, k - 1, l, m, level + 1);
                     ndHelperA(pop, ranks, k - 1, m, level + 1);
-
-                    l.addAll(m);
-                    ndHelperB(pop, ranks, k - 1, l, h, level + 1);
-
+                    ndHelperB(pop, ranks, k - 1, lm, h, level + 1);
                     ndHelperA(pop, ranks, k, h, level + 1);
-
                     return;
                 } else {
                     kPrev = pop[index][k];
@@ -202,6 +224,7 @@ public class PPSN2014 {
                 ndHelperB(pop, ranks, k - 1, m1, m2, level + 1);
 
                 l1.addAll(m1);
+                Collections.sort(l1); //TODO: O(N) manual merge
                 ndHelperB(pop, ranks, k - 1, l1, h2, level + 1);
 
                 ndHelperB(pop, ranks, k, h1, h2, level + 1);
@@ -213,29 +236,46 @@ public class PPSN2014 {
     private void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         assert (pop.length == ranks.length);
 
-        List<Integer> tSet = new ArrayList<>();
-        for (int h : hSet) {
-            for (int l : lSet) {
-                if (dominatesBy12(pop[l], pop[h]) < 0) {
-                    final List<Integer> newTSet = new ArrayList<>();
-                    boolean foundBetter = false;
-                    for (int t : tSet) {
-                        if (ranks[t] != ranks[l])
-                            newTSet.add(t);
-                        else if (ranks[t] == ranks[l] && pop[t][1] <= pop[l][1])
-                            foundBetter = true;
-                    }
+//        System.out.println("SweepB. L, H:");
+//        System.out.println(lSet);
+//        System.out.println(lSet.stream().map(i -> pop[i]).map(Arrays::toString).collect(Collectors.toList()));
+//        System.out.println(lSet.stream().map(i -> ranks[i]).collect(Collectors.toList()));
+//        System.out.println(hSet);
+//        System.out.println(hSet.stream().map(i -> pop[i]).map(Arrays::toString).collect(Collectors.toList()));
+//        System.out.println(hSet.stream().map(i -> ranks[i]).collect(Collectors.toList()));
+//        new Exception().printStackTrace(System.out);
 
-                    if (!foundBetter) {
-                        newTSet.add(l);
-                        tSet = newTSet;
+        List<Integer> tSet = new ArrayList<>();
+        int lIndex = 0;
+        for (int h : hSet) {
+            while (lIndex < lSet.size() && dominatesBy12(pop[lSet.get(lIndex)], pop[h]) <= 0) {
+                final int l = lSet.get(lIndex);
+
+                final List<Integer> newTSet = new ArrayList<>();
+                boolean foundBetter = false;
+                for (int t : tSet) {
+                    if (ranks[t] != ranks[l])
+                        newTSet.add(t);
+                    else if (ranks[t] == ranks[l] && dominatesBy12(pop[t], pop[h]) <= 0) //pop[t][1] <= pop[l][1])
+                        foundBetter = true;
+                    else if (ranks[t] == ranks[l] && pop[t][1] <= pop[l][1]) { //but not dominates
+                        foundBetter = true;
+                        newTSet.add(t);
                     }
                 }
+
+                if (!foundBetter) {
+                    newTSet.add(l);
+                    tSet = newTSet;
+                }
+
+                lIndex++;
             }
 
             int r = Integer.MIN_VALUE;
             for (int t : tSet) {
                 if (dominatesBy12(pop[t], pop[h]) < 0) {
+                //if (pop[t][1] < pop[h][1]) {
                     r = Math.max(r, ranks[t]);
                 }
             }
