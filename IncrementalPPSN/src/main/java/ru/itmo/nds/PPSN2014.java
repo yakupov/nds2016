@@ -63,6 +63,19 @@ public class PPSN2014 {
         assert (pop.length == ranks.length);
         assert (workingSet == null || workingSet.size() <= pop.length);
 
+
+//        if (true) { //FIXME
+//            for (int i = 0; i < workingSet.size(); ++i) {
+//                for (int j = 0; j < workingSet.size(); ++j) {
+//                    if (dominates(pop[j], pop[i], pop[j].length) < 0)
+//                        ranks[i] = Math.max(ranks[i], ranks[j] + 1);
+//                }
+//            }
+//
+//            return;
+//        }
+        //FIXME: error in NHA
+
 //        printSpaces(level);
 //        System.out.println("Enter NHA. K = " + k + ", workingSet = " + workingSet);
 //        printSpaces(level);
@@ -76,9 +89,9 @@ public class PPSN2014 {
         } else if (k == 1) {
             sweepA(pop, ranks, workingSet);
         } else {
-            Double kPrev = null;
+            Double sKPrev = null;
             for (int index : workingSet) {
-                if (kPrev != null && kPrev != pop[index][k]) {
+                if (sKPrev != null && sKPrev != pop[index][k]) {
                     final double[] kth = new double[workingSet.size()];
                     for (int i = 0; i < workingSet.size(); ++i) {
                         kth[i] = pop[workingSet.get(i)][k];
@@ -87,10 +100,11 @@ public class PPSN2014 {
 //                    printSpaces(level);
 //                    System.out.println(" Split by median " + median);
 
-                    final List<Integer> l = new ArrayList<>();
-                    final List<Integer> m = new ArrayList<>();
-                    final List<Integer> h = new ArrayList<>();
+                    final List<Integer> l = new ArrayList<>(workingSet.size());
+                    final List<Integer> m = new ArrayList<>(workingSet.size());
+                    final List<Integer> h = new ArrayList<>(workingSet.size());
                     split(pop, k, median, workingSet, l, m, h);
+                    final List<Integer> lm = sortedMerge(l, m);
 
 //                    printSpaces(level);
 //                    System.out.println("SPLIT A LMH");
@@ -103,21 +117,6 @@ public class PPSN2014 {
 //                    printSpaces(level);
 //                    System.out.println(Arrays.toString(ranks));
 
-                    final List<Integer> lm = new ArrayList<>(l.size() + m.size());
-                    int lIndex = 0;
-                    int mIndex = 0;
-                    while (lIndex < l.size() || mIndex < m.size()) {
-                        if (lIndex == l.size()) {
-                            lm.add(m.get(mIndex++));
-                        } else if (mIndex == m.size()) {
-                            lm.add(l.get(lIndex++));
-                        } else if (l.get(lIndex) <= m.get(mIndex)) {
-                            lm.add(l.get(lIndex++));
-                        } else {
-                            lm.add(m.get(mIndex++));
-                        }
-                    }
-
                     ndHelperA(pop, ranks, k, l, level + 1);
                     ndHelperB(pop, ranks, k - 1, l, m, level + 1);
                     ndHelperA(pop, ranks, k - 1, m, level + 1);
@@ -125,7 +124,7 @@ public class PPSN2014 {
                     ndHelperA(pop, ranks, k, h, level + 1);
                     return;
                 } else {
-                    kPrev = pop[index][k];
+                    sKPrev = pop[index][k];
                 }
             }
 
@@ -144,6 +143,17 @@ public class PPSN2014 {
         assert (pop.length == ranks.length);
         assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
 
+        if (true) { //FIXME
+            for (int i = 0; i < workingSet.size(); ++i) {
+                for (int j = 0; j < workingSet.size(); ++j) {
+                    if (dominates(pop[j], pop[i], pop[j].length) < 0)
+                        ranks[i] = Math.max(ranks[i], ranks[j] + 1);
+                }
+            }
+
+            return;
+        }
+
         List<Integer> tSet = new ArrayList<>();
         tSet.add(workingSet.get(0));
 
@@ -151,6 +161,7 @@ public class PPSN2014 {
             final int currIndex = workingSet.get(i);
             final double[] currIndividual = pop[currIndex];
 
+            //TODO: rewrite for speed
             tSet.stream()
                     .filter(t -> pop[t][1] < currIndividual[1] ||
                             pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0])
@@ -175,7 +186,7 @@ public class PPSN2014 {
 
         if (lSet == null || lSet.isEmpty() || hSet == null || hSet.isEmpty()) {
             return;
-        } else if (lSet.size() == 1 || hSet.size() == 1) {
+        } else if (lSet.size() == 1 || hSet.size() == 1 || true) { //FIXME
             for (int h : hSet) {
                 //noinspection Convert2streamapi
                 for (int l : lSet) {
@@ -185,7 +196,7 @@ public class PPSN2014 {
             }
         } else if (k == 1) {
             sweepB(pop, ranks, lSet, hSet);
-        } else {
+        } else { //FIXME: error here somewhere
             double lMin = Double.POSITIVE_INFINITY;
             double lMax = Double.NEGATIVE_INFINITY;
             for (int l : lSet) {
@@ -203,6 +214,7 @@ public class PPSN2014 {
             if (lMax <= hMin) {
                 ndHelperB(pop, ranks, k - 1, lSet, hSet, level + 1);
             } else if (lMin <= hMax) {
+                //TODO: rewrite for speed
                 final double median = new QuickSelect().getMedian(
                         Stream.concat(lSet.stream(), hSet.stream())
                                 .mapToDouble(index -> pop[index][k])
@@ -213,6 +225,7 @@ public class PPSN2014 {
                 final List<Integer> m1 = new ArrayList<>();
                 final List<Integer> h1 = new ArrayList<>();
                 split(pop, k, median, lSet, l1, m1, h1);
+                final List<Integer> l1m1 = sortedMerge(l1, m1);
 
                 final List<Integer> l2 = new ArrayList<>();
                 final List<Integer> m2 = new ArrayList<>();
@@ -222,11 +235,7 @@ public class PPSN2014 {
                 ndHelperB(pop, ranks, k, l1, l2, level + 1);
                 ndHelperB(pop, ranks, k - 1, l1, m2, level + 1);
                 ndHelperB(pop, ranks, k - 1, m1, m2, level + 1);
-
-                l1.addAll(m1);
-                Collections.sort(l1); //TODO: O(N) manual merge
-                ndHelperB(pop, ranks, k - 1, l1, h2, level + 1);
-
+                ndHelperB(pop, ranks, k - 1, l1m1, h2, level + 1);
                 ndHelperB(pop, ranks, k, h1, h2, level + 1);
             }
         }
@@ -248,20 +257,15 @@ public class PPSN2014 {
         List<Integer> tSet = new ArrayList<>();
         int lIndex = 0;
         for (int h : hSet) {
-            while (lIndex < lSet.size() && dominatesBy12(pop[lSet.get(lIndex)], pop[h]) <= 0) {
+            while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
                 final int l = lSet.get(lIndex);
-
-                final List<Integer> newTSet = new ArrayList<>();
+                final List<Integer> newTSet = new ArrayList<>(tSet.size() + 1);
                 boolean foundBetter = false;
                 for (int t : tSet) {
                     if (ranks[t] != ranks[l])
                         newTSet.add(t);
-                    else if (ranks[t] == ranks[l] && dominatesBy12(pop[t], pop[h]) <= 0) //pop[t][1] <= pop[l][1])
+                    else if (ranks[t] == ranks[l] && pop[t][1] <= pop[l][1])
                         foundBetter = true;
-                    else if (ranks[t] == ranks[l] && pop[t][1] <= pop[l][1]) { //but not dominates
-                        foundBetter = true;
-                        newTSet.add(t);
-                    }
                 }
 
                 if (!foundBetter) {
@@ -291,7 +295,7 @@ public class PPSN2014 {
      * Split the population into three parts around the median
      *
      * @param pop         Population
-     * @param k           Objective to the population split on
+     * @param k           Objective to the population split on (array index!)
      * @param medianValue Value of the {@code k}-th objective to split the population on
      * @param workingSet  input
      * @param l           output: p_{@code k} < {@code medianValue}, where p is a member of {@code pop}
@@ -336,8 +340,8 @@ public class PPSN2014 {
      *
      * @param d1  First individual
      * @param d2  Second individual
-     * @param dim Number of comparable coordinates in each individual (starting with zero!)
-     *            In the most common notation k = {@code dim} + 1
+     * @param dim Number of comparable coordinates in each individual (not max. index!)
+     *            In the most common max. compared index will be {@code dim} - 1
      * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
      */
     private int dominates(double[] d1, double[] d2, int dim) {
@@ -347,7 +351,7 @@ public class PPSN2014 {
     /**
      * @param d1        First individual
      * @param d2        Second individual
-     * @param dim       Number of comparable coordinates in each individual (starting with zero!)
+     * @param dim       Number of comparable coordinates in each individual (not max. index!)
      * @param currCoord Current comparable coordinate
      * @param d1less    At least one coordinate of d1 is less than corresponding coordinate of d2
      * @param d2less    At least one coordinate of d2 is less than corresponding coordinate of d1
@@ -373,6 +377,45 @@ public class PPSN2014 {
         } else {
             return dominatesByFirstCoordinates(d1, d2, dim, currCoord + 1, d1less, d2less);
         }
+    }
+
+    /**
+     * Perform lexicographical comparison
+     *
+     * @param d1        First individual
+     * @param d2        Second individual
+     * @param dim       Number of comparable coordinates in each individual (not max. index!)
+     * @return -1 if {@code d1} is lexicographically smaller than {@code d2}. 1 if larger. 0 if equal.
+     */
+    private int lexCompare(double[] d1, double[] d2, int dim) {
+        assert(d1.length >= dim && d2.length >= dim);
+
+        for (int i = 0; i < dim; ++i) {
+            if (d1[i] < d2[i])
+                return -1;
+            else if (d1[i] > d2[i])
+                return 1;
+        }
+        return 0;
+    }
+
+    private List<Integer> sortedMerge(List<Integer> l1, List<Integer> l2) {
+        final List<Integer> res = new ArrayList<>(l1.size() + l2.size());
+        int l1Index = 0;
+        int l2Index = 0;
+        while (l1Index < l1.size() || l2Index < l2.size()) {
+            if (l1Index == l1.size()) {
+                res.add(l2.get(l2Index++));
+            } else if (l2Index == l2.size()) {
+                res.add(l1.get(l1Index++));
+            } else if (l1.get(l1Index) <= l2.get(l2Index)) {
+                res.add(l1.get(l1Index++));
+            } else {
+                res.add(l2.get(l2Index++));
+            }
+        }
+
+        return res;
     }
 
     private void printSpaces(int level) {

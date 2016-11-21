@@ -1,5 +1,6 @@
 package ru.itmo.ppsn;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import ru.itmo.mbuzdalov.FasterNonDominatedSorting;
 import ru.itmo.mbuzdalov.sorters.Sorter;
@@ -16,27 +17,7 @@ public class StupidPerformanceTest {
             {-758, -515, -226}, {-786, -98, -268}, {-666, -666, -666}, {300, 300, 300}
     };
 
-
-    @Test
-    public void testNewCorrectness() throws Exception {
-        double[][] localPop = new double[pop.length][];
-        System.arraycopy(pop, 0, localPop, 0, pop.length);
-        final int[] ranks = new PPSN2014().performNds(localPop);
-
-        final Sorter oldSorter = FasterNonDominatedSorting.getSorter(pop.length, pop[0].length);
-        int[] oldRanks = new int[pop.length];
-        localPop = new double[pop.length][];
-        System.arraycopy(pop, 0, localPop, 0, pop.length);
-        oldSorter.sort(pop, oldRanks);
-        oldRanks = RankedIndividual.sortRanksForLexSortedPopulation(oldRanks, pop);
-
-        System.out.println(Arrays.toString(ranks));
-        System.out.println(Arrays.toString(oldRanks));
-
-        assertArrayEquals(oldRanks, ranks);
-    }
-
-
+    @Ignore
     @Test
     public void testNew1() throws Exception {
         double begin = 0;
@@ -54,6 +35,7 @@ public class StupidPerformanceTest {
         System.out.println("New time: " + (System.nanoTime() - begin));
     }
 
+    @Ignore
     @Test
     public void testOld1() throws Exception {
         double begin = 0;

@@ -14,12 +14,6 @@ public class QuickSelect {
         random.setSeed(System.nanoTime());
     }
 
-    public <T> double getMedian(T[] values, Function<T, Double> tMapper) {
-        Objects.requireNonNull(values);
-        Objects.requireNonNull(tMapper);
-        return getMedian(Arrays.stream(values).mapToDouble(tMapper::apply).toArray());
-    }
-
     public double getMedian(double[] values) {
         Objects.requireNonNull(values);
         return getKthElement(values, values.length / 2);
