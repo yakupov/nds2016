@@ -2,32 +2,24 @@ package ru.itmo.ppsn;
 
 import java.util.Arrays;
 
-public class RankedIndividual {
-    private int rank;
-    private double[] fitness;
+class RankedIndividual {
+    private final int rank;
+    private final double[] fitness;
 
-    public RankedIndividual(int rank, double[] fitness) {
+    private RankedIndividual(int rank, double[] fitness) {
         this.rank = rank;
         this.fitness = fitness;
     }
 
-    public int getRank() {
+    private int getRank() {
         return rank;
     }
 
-    public void setRank(int rank) {
-        this.rank = rank;
-    }
-
-    public double[] getFitness() {
+    private double[] getFitness() {
         return fitness;
     }
 
-    public void setFitness(double[] fitness) {
-        this.fitness = fitness;
-    }
-
-    public static int[] sortRanksForLexSortedPopulation(int[] ranks, double[][] pop) {
+    static int[] sortRanksForLexSortedPopulation(int[] ranks, double[][] pop) {
         final RankedIndividual[] ri = new RankedIndividual[ranks.length];
         for (int i = 0; i < ranks.length; ++i) {
             ri[i] = new RankedIndividual(ranks[i], pop[i]);

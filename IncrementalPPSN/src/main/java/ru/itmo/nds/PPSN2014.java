@@ -2,9 +2,9 @@ package ru.itmo.nds;
 
 import ru.itmo.util.QuickSelect;
 
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Another implementation of a NDS, proposed in the following paper:
@@ -21,8 +21,81 @@ import java.util.stream.Stream;
  * langid       = {english}
  * }
  */
-@SuppressWarnings("UnnecessaryReturnStatement")
+@SuppressWarnings({"UnnecessaryReturnStatement", "Convert2streamapi"})
 public class PPSN2014 {
+    public static final String ENABLE_PPSN_TRACE_PROPERTY = "ru.itmo.ppsn.trace_to_stdout";
+
+    private final QuickSelect quickSelect = new QuickSelect();
+    private final boolean traceToStdout;
+
+    public PPSN2014() {
+        traceToStdout = System.getProperty(ENABLE_PPSN_TRACE_PROPERTY) != null;
+    }
+
+    /**
+     * Add one point and do incremental sorting.
+     *
+     * @param sortedPop Sorted population to add the new points into
+     * @param ranks     Ranks of the population
+     * @param addend    New point
+     * @return New sorted population and its ranks
+     */
+    public RankedPopulation performIncrementalNds(final double[][] sortedPop, final int[] ranks, final double[] addend) {
+        assert (ranks.length == sortedPop.length);
+        assert (sortedPop.length == 0 || addend.length == sortedPop[0].length);
+
+        final int dim = addend.length;
+        final double[][] newPop = new double[sortedPop.length + 1][];
+        final int[] newRanks = new int[ranks.length + 1];
+        final List<Integer> hSet = new ArrayList<>(ranks.length);
+        final List<Integer> lSet = new ArrayList<>(ranks.length);
+
+        int writeIndex = 0;
+        int addendIndex = -1;
+        int addendRank = 0;
+        for (int i = 0; i < sortedPop.length; ++i) {
+            if (addendIndex < 0) {
+                if (lexCompare(addend, sortedPop[i], dim) <= 0) {
+                    newPop[writeIndex] = addend;
+                    addendIndex = writeIndex;
+                    writeIndex++;
+                }
+            }
+
+            newRanks[writeIndex] = ranks[i];
+            newPop[writeIndex] = sortedPop[i];
+            writeIndex++;
+
+            final int dom = dominates(sortedPop[i], addend, dim);
+            if (dom > 0) {
+                if (addendIndex < 0)
+                    hSet.add(i);
+                else
+                    hSet.add(i + 1);
+            } else {
+                if (addendIndex < 0)
+                    lSet.add(i);
+                else
+                    lSet.add(i + 1);
+
+                if (dom < 0)
+                    addendRank = Math.max(addendRank, ranks[i] + 1);
+            }
+        }
+
+        if (addendIndex < 0) {
+            addendIndex = newPop.length - 1;
+            newPop[addendIndex] = addend;
+        }
+        newRanks[addendIndex] = addendRank;
+        lSet.add(addendIndex);
+
+        ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
+        ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
+
+        return new RankedPopulation(newPop, newRanks);
+    }
+
     /**
      * Sorts population lexicographically (input array will be modified!) and returns array of ranks
      * (for the sorted population)
@@ -44,42 +117,50 @@ public class PPSN2014 {
             return 0;
         });
 
-        final int k = population[0].length - 1;
-        //System.out.println("Performing nds with K = " + k);
-
         final int[] ranks = new int[population.length];
-        final List<Integer> workingSet = new ArrayList<>(population.length);
-        for (int i = 0; i < population.length; ++i) {
-            workingSet.add(i);
+        final int k = population[0].length;
+        if (traceToStdout) {
+            logToStdout(0, "Performing non-dominating sort with K = " + k);
         }
 
-        ndHelperA(population, ranks, k, workingSet, 0);
-        return ranks;
+        if (k == 0) {
+            return ranks;
+        } else if (k == 1) {
+            for (int i = 1; i < population.length; ++i) {
+                if (population[i][0] == population[i - 1][0])
+                    ranks[i] = ranks[i - 1];
+                else
+                    ranks[i] = ranks[i - 1] + 1;
+            }
+            return ranks;
+        } else {
+            final List<Integer> workingSet = new ArrayList<>(population.length);
+            for (int i = 0; i < population.length; ++i)
+                workingSet.add(i);
+
+            ndHelperA(population, ranks, k - 1, workingSet, 0);
+            return ranks;
+        }
     }
 
-    //TODO: javadoc & cleanup unused 'logging' code
-
+    /**
+     * Assign ranks to the points of {@code workingSet} basing on the first {@code k} + 1 coordinates
+     * using the "divide and conquer" approach.
+     *
+     * @param pop        Lexicographically sorted population
+     * @param ranks      ranks[i] is the rank of individual pop[i]
+     * @param k          Maximum comparable coordinate index
+     * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
+     * @param level      Recursion level (used for logging)
+     */
     private void ndHelperA(double[][] pop, int[] ranks, int k, List<Integer> workingSet, int level) {
         assert (pop.length == ranks.length);
         assert (workingSet == null || workingSet.size() <= pop.length);
 
-
-//        if (true) { //FIXME
-//            for (int i = 0; i < workingSet.size(); ++i) {
-//                for (int j = 0; j < workingSet.size(); ++j) {
-//                    if (dominates(pop[j], pop[i], pop[j].length) < 0)
-//                        ranks[i] = Math.max(ranks[i], ranks[j] + 1);
-//                }
-//            }
-//
-//            return;
-//        }
-        //FIXME: error in NHA
-
-//        printSpaces(level);
-//        System.out.println("Enter NHA. K = " + k + ", workingSet = " + workingSet);
-//        printSpaces(level);
-//        System.out.println(" Ranks = " + Arrays.toString(ranks));
+        if (traceToStdout) {
+            logToStdout(level, "NDHelperA. K = " + k + ", workingSet = " + workingSet);
+            logToStdout(level, ("Ranks = " + Arrays.toString(ranks)));
+        }
 
         if (workingSet == null || workingSet.size() < 2) {
             return;
@@ -96,26 +177,20 @@ public class PPSN2014 {
                     for (int i = 0; i < workingSet.size(); ++i) {
                         kth[i] = pop[workingSet.get(i)][k];
                     }
-                    final double median = new QuickSelect().getMedian(kth);
-//                    printSpaces(level);
-//                    System.out.println(" Split by median " + median);
-
+                    final double median = quickSelect.getMedian(kth);
                     final List<Integer> l = new ArrayList<>(workingSet.size());
                     final List<Integer> m = new ArrayList<>(workingSet.size());
                     final List<Integer> h = new ArrayList<>(workingSet.size());
                     split(pop, k, median, workingSet, l, m, h);
                     final List<Integer> lm = sortedMerge(l, m);
 
-//                    printSpaces(level);
-//                    System.out.println("SPLIT A LMH");
-//                    printSpaces(level);
-//                    System.out.println(l);
-//                    printSpaces(level);
-//                    System.out.println(m);
-//                    printSpaces(level);
-//                    System.out.println(h);
-//                    printSpaces(level);
-//                    System.out.println(Arrays.toString(ranks));
+                    if (traceToStdout) {
+                        logToStdout(level, "Performing split. L, M, H:");
+                        logToStdout(level, l);
+                        logToStdout(level, m);
+                        logToStdout(level, h);
+                        logToStdout(level, "Ranks: " + Arrays.toString(ranks));
+                    }
 
                     ndHelperA(pop, ranks, k, l, level + 1);
                     ndHelperB(pop, ranks, k - 1, l, m, level + 1);
@@ -135,24 +210,13 @@ public class PPSN2014 {
     /**
      * Assign ranks using the first two coordinates
      *
-     * @param pop        population
+     * @param pop        Lexicographically sorted population
      * @param ranks      ranks[i] is the rank of individual pop[i]
-     * @param workingSet Indices of the population members that should be analyzed during the current run
+     * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
      */
-    private void sweepA(double[][] pop, int[] ranks, List<Integer> workingSet) {
+    protected void sweepA(double[][] pop, int[] ranks, List<Integer> workingSet) {
         assert (pop.length == ranks.length);
         assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
-
-        if (true) { //FIXME
-            for (int i = 0; i < workingSet.size(); ++i) {
-                for (int j = 0; j < workingSet.size(); ++j) {
-                    if (dominates(pop[j], pop[i], pop[j].length) < 0)
-                        ranks[i] = Math.max(ranks[i], ranks[j] + 1);
-                }
-            }
-
-            return;
-        }
 
         List<Integer> tSet = new ArrayList<>();
         tSet.add(workingSet.get(0));
@@ -161,42 +225,54 @@ public class PPSN2014 {
             final int currIndex = workingSet.get(i);
             final double[] currIndividual = pop[currIndex];
 
-            //TODO: rewrite for speed
-            tSet.stream()
-                    .filter(t -> pop[t][1] < currIndividual[1] ||
-                            pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0])
-                    .mapToInt(t -> ranks[t])
-                    .max()
-                    .ifPresent(r -> ranks[currIndex] = Math.max(r + 1, ranks[currIndex]));
+            int r = Integer.MIN_VALUE;
+            for (int t : tSet) {
+                if (pop[t][1] < currIndividual[1] || pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0]) {
+                    r = Math.max(r, ranks[t]);
+                }
+            }
+            ranks[currIndex] = Math.max(r + 1, ranks[currIndex]);
 
-            final int currRank = ranks[currIndex];
-            final List<Integer> newTSet = tSet.stream()
-                    .filter(tIndex -> ranks[tIndex] != currRank)
-                    .collect(Collectors.toList());
+            final List<Integer> newTSet = new ArrayList<>(tSet.size() + 1);
+            for (int t : tSet) {
+                if (ranks[t] != ranks[currIndex])
+                    newTSet.add(t);
+            }
             newTSet.add(currIndex);
             tSet = newTSet;
         }
     }
 
+    /**
+     * Adjust ranks of the points from {@code hSet} basing on the ranks of the points from {@code lSet}
+     * basing on the first {@code k} + 1 coordinates
+     *
+     * @param pop   Lexicographically sorted population
+     * @param ranks ranks[i] is the rank of individual pop[i]
+     * @param k     Maximum comparable coordinate index
+     * @param lSet  Lower set (its ranks are already calculated). Must be sorted.
+     * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
+     * @param level Recursion level (used for logging)
+     */
     private void ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
         assert (pop.length == ranks.length);
 
-//        printSpaces(level);
-//        System.out.println("NHB. K = " + k + ", l = " + lSet + ", h = " + hSet);
+        if (traceToStdout) {
+            logToStdout(level, ("NDHelperB. K = " + k + ", l = " + lSet + ", h = " + hSet));
+        }
 
         if (lSet == null || lSet.isEmpty() || hSet == null || hSet.isEmpty()) {
             return;
-        } else if (lSet.size() == 1 || hSet.size() == 1 || true) { //FIXME
+        } else if (lSet.size() == 1 || hSet.size() == 1) {
             for (int h : hSet) {
-                //noinspection Convert2streamapi
                 for (int l : lSet) {
-                    if (dominates(pop[l], pop[h], k + 1) < 0)
+                    if (dominates(pop[l], pop[h], pop[l].length) < 0)
                         ranks[h] = Math.max(ranks[h], ranks[l] + 1);
                 }
             }
         } else if (k == 1) {
             sweepB(pop, ranks, lSet, hSet);
-        } else { //FIXME: error here somewhere
+        } else {
             double lMin = Double.POSITIVE_INFINITY;
             double lMax = Double.NEGATIVE_INFINITY;
             for (int l : lSet) {
@@ -214,12 +290,12 @@ public class PPSN2014 {
             if (lMax <= hMin) {
                 ndHelperB(pop, ranks, k - 1, lSet, hSet, level + 1);
             } else if (lMin <= hMax) {
-                //TODO: rewrite for speed
-                final double median = new QuickSelect().getMedian(
-                        Stream.concat(lSet.stream(), hSet.stream())
-                                .mapToDouble(index -> pop[index][k])
-                                .toArray()
-                );
+                final double[] kth = new double[hSet.size() + lSet.size()];
+                for (int i = 0; i < lSet.size(); ++i)
+                    kth[i] = pop[lSet.get(i)][k];
+                for (int i = 0; i < hSet.size(); ++i)
+                    kth[lSet.size() + i] = pop[hSet.get(i)][k];
+                final double median = quickSelect.getMedian(kth);
 
                 final List<Integer> l1 = new ArrayList<>();
                 final List<Integer> m1 = new ArrayList<>();
@@ -242,17 +318,17 @@ public class PPSN2014 {
 
     }
 
-    private void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
+    /**
+     * Adjust ranks of the points from {@code hSet} basing on the ranks of the points from {@code lSet}
+     * basing on the first two coordinates
+     *
+     * @param pop   Lexicographically sorted population
+     * @param ranks ranks[i] is the rank of individual pop[i]
+     * @param lSet  Lower set (its ranks are already calculated). Must be sorted.
+     * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
+     */
+    protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         assert (pop.length == ranks.length);
-
-//        System.out.println("SweepB. L, H:");
-//        System.out.println(lSet);
-//        System.out.println(lSet.stream().map(i -> pop[i]).map(Arrays::toString).collect(Collectors.toList()));
-//        System.out.println(lSet.stream().map(i -> ranks[i]).collect(Collectors.toList()));
-//        System.out.println(hSet);
-//        System.out.println(hSet.stream().map(i -> pop[i]).map(Arrays::toString).collect(Collectors.toList()));
-//        System.out.println(hSet.stream().map(i -> ranks[i]).collect(Collectors.toList()));
-//        new Exception().printStackTrace(System.out);
 
         List<Integer> tSet = new ArrayList<>();
         int lIndex = 0;
@@ -278,8 +354,8 @@ public class PPSN2014 {
 
             int r = Integer.MIN_VALUE;
             for (int t : tSet) {
-                if (dominatesBy12(pop[t], pop[h]) < 0) {
-                //if (pop[t][1] < pop[h][1]) {
+                if (dominates(pop[t], pop[h], pop[h].length) < 0) { //TODO: check. Differs from Fortin for the case of equality. Same for NHB
+                    //if (pop[t][1] < pop[h][1]) {
                     r = Math.max(r, ranks[t]);
                 }
             }
@@ -325,17 +401,6 @@ public class PPSN2014 {
     }
 
     /**
-     * Check the domination relation over the first two objectives.
-     *
-     * @param d1 First individual
-     * @param d2 Second individual
-     * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
-     */
-    private int dominatesBy12(double[] d1, double[] d2) {
-        return dominates(d1, d2, 2);
-    }
-
-    /**
      * Check the domination relation over the first K objectives.
      *
      * @param d1  First individual
@@ -344,7 +409,7 @@ public class PPSN2014 {
      *            In the most common max. compared index will be {@code dim} - 1
      * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
      */
-    private int dominates(double[] d1, double[] d2, int dim) {
+    int dominates(double[] d1, double[] d2, int dim) {
         return dominatesByFirstCoordinates(d1, d2, dim, 0, false, false);
     }
 
@@ -382,13 +447,13 @@ public class PPSN2014 {
     /**
      * Perform lexicographical comparison
      *
-     * @param d1        First individual
-     * @param d2        Second individual
-     * @param dim       Number of comparable coordinates in each individual (not max. index!)
+     * @param d1  First individual
+     * @param d2  Second individual
+     * @param dim Number of comparable coordinates in each individual (not max. index!)
      * @return -1 if {@code d1} is lexicographically smaller than {@code d2}. 1 if larger. 0 if equal.
      */
-    private int lexCompare(double[] d1, double[] d2, int dim) {
-        assert(d1.length >= dim && d2.length >= dim);
+    int lexCompare(double[] d1, double[] d2, int dim) {
+        assert (d1.length >= dim && d2.length >= dim);
 
         for (int i = 0; i < dim; ++i) {
             if (d1[i] < d2[i])
@@ -418,8 +483,9 @@ public class PPSN2014 {
         return res;
     }
 
-    private void printSpaces(int level) {
+    private void logToStdout(int level, Object message) {
         for (int i = 0; i < level; ++i)
             System.out.print("\t");
+        System.out.println(message);
     }
 }

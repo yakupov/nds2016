@@ -28,6 +28,18 @@ public class Playground {
 
     private static final MergeSorter mergeSorter = new MergeSorter(pop.length);
 
+    private void lexSort(double[][] lPop) {
+        Arrays.sort(lPop, (o1, o2) -> {
+            for (int i = 0; i < o1.length; ++i) {
+                if (o1[i] < o2[i])
+                    return -1;
+                else if (o1[i] > o2[i])
+                    return 1;
+            }
+            return 0;
+        });
+    }
+
     @Ignore
     @Test
     public void testPlayground1() throws Exception {
@@ -43,7 +55,7 @@ public class Playground {
             indices[i] = i;
         }
 
-        final int[] eqComp = new int[pop.length]; //TODO: ??????
+        final int[] eqComp = new int[pop.length];
 
         mergeSorter.lexSort(indices, 0, pop.length, pop, eqComp);
 
@@ -59,16 +71,7 @@ public class Playground {
             System.out.println("\t" + Arrays.toString(pop[i]));
         }
 
-        final List<double[]> lPop = Arrays.asList(pop);
-        Collections.sort(lPop, (o1, o2) -> {
-            for (int i = 0; i < o1.length; ++i) {
-                if (o1[i] < o2[i])
-                    return -1;
-                else if (o1[i] > o2[i])
-                    return 1;
-            }
-            return 0;
-        });
+        lexSort(pop);
 
         System.out.println("lPop: ");
         for (double[] d : pop) {
@@ -111,16 +114,7 @@ public class Playground {
             final double[][] copPop = new double[pop.length][];
             System.arraycopy(pop, 0, copPop, 0, pop.length);
 
-            final List<double[]> lPop = Arrays.asList(copPop);
-            Collections.sort(lPop, (o1, o2) -> {
-                for (int i = 0; i < o1.length; ++i) {
-                    if (o1[i] < o2[i])
-                        return -1;
-                    else if (o1[i] > o2[i])
-                        return 1;
-                }
-                return 0;
-            });
+            lexSort(copPop);
         }
 
         System.out.println("Java time: " + (System.nanoTime() - begin));
@@ -197,6 +191,7 @@ public class Playground {
             System.out.println("\t" + Arrays.toString(d));
         }
 
+        System.setProperty(PPSN2014.ENABLE_PPSN_TRACE_PROPERTY, "true");
         final int[] ranks = new PPSN2014().performNds(copPop);
 
         System.out.println("After sort: ");

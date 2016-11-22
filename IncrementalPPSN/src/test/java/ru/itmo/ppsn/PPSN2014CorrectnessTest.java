@@ -2,6 +2,8 @@ package ru.itmo.ppsn;
 
 import org.junit.Test;
 import ru.itmo.mbuzdalov.FasterNonDominatedSorting;
+import ru.itmo.mbuzdalov.Hypercube;
+import ru.itmo.mbuzdalov.Tests;
 import ru.itmo.mbuzdalov.sorters.Sorter;
 import ru.itmo.nds.PPSN2014;
 
@@ -9,7 +11,7 @@ import java.util.Arrays;
 
 import static org.junit.Assert.assertArrayEquals;
 
-public class CorrectnessTest {
+public class PPSN2014CorrectnessTest {
     private int[] calculateNds(double[][] input) {
         return new PPSN2014().performNds(input);
     }
@@ -38,6 +40,12 @@ public class CorrectnessTest {
         System.arraycopy(pop, 0, localPop, 0, pop.length);
         final int[] ranks = new PPSN2014().performNds(localPop);
 
+        System.out.print("Pop:");
+        for (double[] d : localPop) {
+            System.out.print(" " + Arrays.toString(d));
+        }
+        System.out.println();
+
         final Sorter oldSorter = FasterNonDominatedSorting.getSorter(pop.length, pop[0].length);
         int[] oldRanks = new int[pop.length];
         localPop = new double[pop.length][];
@@ -45,10 +53,43 @@ public class CorrectnessTest {
         oldSorter.sort(pop, oldRanks);
         oldRanks = RankedIndividual.sortRanksForLexSortedPopulation(oldRanks, pop);
 
-        System.out.println(Arrays.toString(ranks));
-        System.out.println(Arrays.toString(oldRanks));
+        System.out.println("New: " + Arrays.toString(ranks));
+        System.out.println("Old: " + Arrays.toString(oldRanks));
 
         assertArrayEquals(oldRanks, ranks);
+    }
+
+    @Test
+    public void testsPrimitive() {
+        groupCheck("a single 1D point", Tests.arrayFill(1, 1, 239), new int[1]);
+        groupCheck("a single 100D point", Tests.arrayFill(1, 100, 239), new int[1]);
+        groupCheck("a single 0D point", Tests.arrayFill(1, 0, 239), new int[1]);
+        groupCheck("some 0D points", Tests.arrayFill(10, 0, 239), new int[10]);
+
+        groupCheck("two unequal 1D points ordered decreasing", new double[][]{{2}, {1}}, new int[]{1, 0});
+        groupCheck("two unequal 1D points ordered increasing", new double[][]{{2}, {3}}, new int[]{0, 1});
+        groupCheck("two equal 1D points", new double[][]{{2}, {2}}, new int[]{0, 0});
+
+        groupCheck("two incomparable 2D points", new double[][]{{2, 1}, {1, 2}}, new int[]{0, 0});
+        groupCheck("two 2D points dominated increasingly", new double[][]{{1, 1}, {1, 2}}, new int[]{0, 1});
+        groupCheck("two 2D points dominated decreasingly", new double[][]{{1, 2}, {1, 1}}, new int[]{1, 0});
+    }
+
+    @Test
+    public void testsHypercube() {
+        final Hypercube hypercube = new Hypercube();
+
+        hypercube.callOn(2, 10, (i, o) -> groupCheck("2D-hypercube of size 10", i, o));
+        hypercube.callOn(3, 8, (i, o) -> groupCheck("3D-hypercube of size 8", i, o));
+        hypercube.callOn(4, 5, (i, o) -> groupCheck("4D-hypercube of size 5", i, o));
+    }
+
+    @Test
+    public void testManyEqualPoints() {
+        groupCheck("two groups of many equal points" ,
+                Tests.concat(Tests.arrayFill(10, 10, 11110), Tests.arrayFill(10, 10, 11111)),
+                Tests.concat(Tests.arrayFill(10, 0), Tests.arrayFill(10, 1))
+        );
     }
 
     @Test
@@ -159,7 +200,7 @@ public class CorrectnessTest {
 
     @Test
     public void test5() {
-        groupCheck("a tricky random test #2 inherited from old hg-based NGP" , new double[][] {
+        groupCheck("a tricky random test #2 inherited from old hg-based NGP", new double[][]{
                 {1, 4, 3, 3, 1, 1}, {3, 5, 4, 6, 7, 1}, {1, 2, 2, 3, 8, 0}, {0, 2, 4, 8, 3, 5}, {0, 2, 7, 4, 2, 9},
                 {1, 3, 9, 4, 0, 1}, {7, 6, 7, 1, 7, 4}, {6, 0, 9, 3, 7, 1}, {7, 0, 7, 8, 3, 0}, {4, 7, 6, 4, 0, 3},
                 {9, 2, 7, 0, 8, 8}, {5, 5, 3, 3, 6, 1}, {0, 7, 4, 1, 9, 2}, {1, 2, 0, 3, 9, 6}, {2, 8, 2, 6, 9, 3},
@@ -200,13 +241,49 @@ public class CorrectnessTest {
                 {1, 4, 1, 5, 7, 7}, {2, 2, 1, 8, 0, 4}, {4, 9, 0, 2, 5, 1}, {8, 4, 4, 7, 9, 9}, {8, 2, 2, 0, 9, 1},
                 {4, 1, 0, 2, 9, 8}, {4, 6, 0, 5, 3, 5}, {8, 6, 0, 8, 7, 3}, {6, 6, 5, 5, 9, 4}, {1, 5, 0, 6, 2, 2},
                 {4, 1, 7, 7, 8, 7}, {7, 4, 4, 6, 5, 4}, {6, 7, 6, 2, 2, 7}, {4, 1, 3, 5, 0, 0}, {1, 5, 9, 5, 6, 7}
-        }, new int[] {
+        }, new int[]{
                 0, 1, 0, 1, 0, 0, 2, 0, 0, 1, 2, 1, 0, 0, 1, 1, 3, 2, 2, 1, 0, 3, 3, 0, 2, 2, 0, 3, 2, 0, 3, 0, 3, 1, 0, 0, 0,
                 1, 1, 1, 1, 0, 0, 1, 1, 0, 0, 2, 1, 1, 1, 1, 2, 0, 0, 0, 3, 2, 2, 0, 0, 0, 3, 0, 1, 2, 1, 1, 1, 1, 0, 1, 1, 1,
                 3, 0, 2, 0, 1, 0, 0, 2, 1, 0, 1, 0, 0, 0, 1, 1, 1, 2, 0, 2, 0, 2, 2, 1, 0, 2, 0, 1, 2, 1, 0, 0, 0, 1, 1, 1, 0,
                 1, 0, 1, 1, 1, 0, 0, 0, 1, 1, 2, 2, 1, 0, 0, 2, 0, 1, 0, 0, 1, 0, 2, 3, 0, 3, 2, 4, 3, 0, 1, 1, 1, 1, 3, 0, 0,
                 0, 3, 1, 1, 1, 0, 2, 2, 0, 0, 0, 1, 2, 2, 2, 2, 1, 0, 0, 1, 2, 1, 1, 2, 1, 0, 2, 2, 0, 2, 2, 1, 0, 0, 0, 1, 3,
                 1, 1, 0, 3, 2, 0, 0, 1, 2, 0, 2, 1, 2, 0, 1
+        });
+    }
+
+    /**
+     * Case: [1.0, 9.0, 2.0, 5.0, 3.0, 5.0] [4.0, 6.0, 0.0, 5.0, 3.0, 5.0] [4.0, 6.0, 2.0, 5.0, 3.0, 5.0]
+     * First two coordinates of 1 and 2 are equal.
+     * If we'll only check the first k coordinates we may lose the difference (int this case - 0 vs 2)
+     * over the current coordinate (helperB).
+     */
+    @Test
+    public void test6() {
+        compareNewAndOld(new double[][]{
+                {1, 9, 2, 5, 3, 5}, {4, 6, 2, 5, 3, 5}, {4, 6, 0, 5, 3, 5}
+        });
+    }
+
+    /**
+     * Failed with incorrect sweepA
+     */
+    @Test
+    public void test7() {
+        compareNewAndOld(new double[][]{
+                {8, 2, 2, 0, 9, 1}, {5, 2, 2, 0, 9, 1}, {2, 2, 1, 8, 0, 4}, {8, 2, 2, 0, 9, 1}
+        });
+    }
+
+    /**
+     * Case: [0.0, 7.0, 4.0, 1.0, 9.0, 2.0] [2.0, 5.0, 4.0, 1.0, 2.0, 2.0] [6.0, 2.0, 1.0, 1.0, 0.0, 2.0] [6.0, 2.0, 6.0, 1.0, 9.0, 2.0]
+     * First two coordinates of 2 and 3 are equal.
+     * If we'll only check the first k coordinates we may lose the difference (int this case - 0 vs 2)
+     * over the current coordinate (sweepB).
+     */
+    @Test
+    public void test8() {
+        compareNewAndOld(new double[][]{
+                {0, 7, 4, 1, 9, 2}, {2, 5, 4, 1, 2, 2}, {6, 2, 6, 1, 9, 2}, {6, 2, 1, 1, 0, 2}
         });
     }
 }
