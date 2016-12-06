@@ -54,41 +54,50 @@ public class PPSN2014 {
         int addendIndex = -1;
         int addendRank = 0;
         for (int i = 0; i < sortedPop.length; ++i) {
-            if (addendIndex < 0) {
-                if (lexCompare(addend, sortedPop[i], dim) <= 0) {
-                    newPop[writeIndex] = addend;
-                    addendIndex = writeIndex;
-                    writeIndex++;
-                }
+            if (addendIndex < 0 && lexCompare(addend, sortedPop[i], dim) <= 0) {
+                addendIndex = writeIndex;
+                newPop[addendIndex] = addend;
+                newRanks[addendIndex] = addendRank;
+                lSet.add(addendIndex);
+                writeIndex++;
             }
 
             newRanks[writeIndex] = ranks[i];
             newPop[writeIndex] = sortedPop[i];
-            writeIndex++;
 
             final int dom = dominates(sortedPop[i], addend, dim);
             if (dom > 0) {
-                if (addendIndex < 0)
-                    hSet.add(i);
-                else
-                    hSet.add(i + 1);
+                hSet.add(writeIndex);
             } else {
-                if (addendIndex < 0)
-                    lSet.add(i);
-                else
-                    lSet.add(i + 1);
-
+                lSet.add(writeIndex);
                 if (dom < 0)
                     addendRank = Math.max(addendRank, ranks[i] + 1);
             }
+
+            writeIndex++;
         }
 
         if (addendIndex < 0) {
             addendIndex = newPop.length - 1;
             newPop[addendIndex] = addend;
+            newRanks[addendIndex] = addendRank;
+            lSet.add(addendIndex);
         }
-        newRanks[addendIndex] = addendRank;
-        lSet.add(addendIndex);
+
+//        System.out.println("O Pop: ");
+//        for (double[] d : sortedPop) {
+//            System.out.println("\t" + Arrays.toString(d));
+//        }
+//        System.out.println("Ranks: " + Arrays.toString(ranks));
+//        System.out.println("Addend: " + Arrays.toString(addend));
+//        System.out.println("N Pop: ");
+//        for (double[] d : newPop) {
+//            System.out.println("\t" + Arrays.toString(d));
+//        }
+//        System.out.println("Ranks: " + Arrays.toString(newRanks));
+//        System.out.println("L: " + lSet);
+//        System.out.println("H: " + hSet);
+
 
         ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
         ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
@@ -452,7 +461,7 @@ public class PPSN2014 {
      * @param dim Number of comparable coordinates in each individual (not max. index!)
      * @return -1 if {@code d1} is lexicographically smaller than {@code d2}. 1 if larger. 0 if equal.
      */
-    int lexCompare(double[] d1, double[] d2, int dim) {
+    private int lexCompare(double[] d1, double[] d2, int dim) {
         assert (d1.length >= dim && d2.length >= dim);
 
         for (int i = 0; i < dim; ++i) {

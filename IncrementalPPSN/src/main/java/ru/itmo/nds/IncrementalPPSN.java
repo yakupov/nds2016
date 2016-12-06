@@ -16,37 +16,47 @@ public class IncrementalPPSN extends PPSN2014 {
 
     @Override
     protected void sweepA(double[][] pop, int[] ranks, List<Integer> workingSet) {
-        final Map<Integer, Integer> leftmostStairs = new HashMap<>(); //From rank to index
-        for (int index : workingSet) {
-            if (!leftmostStairs.containsKey(ranks[index]))
-                leftmostStairs.put(ranks[index], index);
-        }
+        final Map<Integer, Integer> rightmostStairs = new HashMap<>(); //From rank to index
 
         for (int index : workingSet) {
-            if (leftmostStairs.containsKey(ranks[index])) {
-                Integer t = leftmostStairs.get(ranks[index]);
+            if (rightmostStairs.containsKey(ranks[index])) {
+                final int t = rightmostStairs.get(ranks[index]);
                 if (dominates(pop[t], pop[index], pop[t].length) < 0) {
                     ++ranks[index];
-
-                    t = leftmostStairs.get(ranks[index]);
-                    if (t == null || lexCompare(pop[t], pop[index], pop[t].length) > 0)
-                        leftmostStairs.put(ranks[index], index);
                 }
             }
+
+            final Integer t  = rightmostStairs.get(ranks[index]);
+            if (t == null || pop[t][1] > pop[index][1])
+                rightmostStairs.put(ranks[index], index);
         }
     }
 
     @Override
     protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
-        final Map<Integer, Integer> leftmostStairs = new HashMap<>(); //From rank to index
-        for (int l : lSet) {
-            if (!leftmostStairs.containsKey(ranks[l]))
-                leftmostStairs.put(ranks[l], l);
-        }
+        if (lSet == null || lSet.isEmpty() || hSet == null || hSet.isEmpty())
+            return;
 
+        final Map<Integer, Integer> rightmostStairs = new HashMap<>(); //From rank to index
+
+        int lIndex = 0;
         for (int h : hSet) {
-            if (leftmostStairs.containsKey(ranks[h])) {
-                final int t = leftmostStairs.get(ranks[h]);
+            while (lIndex < lSet.size() && lSet.get(lIndex) < h) {
+                final int l = lSet.get(lIndex);
+
+                if (!rightmostStairs.containsKey(ranks[l])) {
+                    rightmostStairs.put(ranks[l], l);
+                } else {
+                    final int t = rightmostStairs.get(ranks[l]);
+                    if (pop[t][1] >= pop[l][1])
+                        rightmostStairs.put(ranks[l], l);
+                }
+
+                lIndex++;
+            }
+
+            if (rightmostStairs.containsKey(ranks[h])) {
+                final int t = rightmostStairs.get(ranks[h]);
                 if (dominates(pop[t], pop[h], pop[t].length) < 0)
                     ++ranks[h];
             }
