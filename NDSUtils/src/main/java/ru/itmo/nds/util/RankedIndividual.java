@@ -1,8 +1,8 @@
-package ru.itmo.ppsn;
+package ru.itmo.nds.util;
 
 import java.util.Arrays;
 
-class RankedIndividual {
+public class RankedIndividual {
     private final int rank;
     private final double[] fitness;
 
@@ -19,7 +19,7 @@ class RankedIndividual {
         return fitness;
     }
 
-    static int[] sortRanksForLexSortedPopulation(int[] ranks, double[][] pop) {
+    public static int[] sortRanksForLexSortedPopulation(int[] ranks, double[][] pop) {
         final RankedIndividual[] ri = new RankedIndividual[ranks.length];
         for (int i = 0; i < ranks.length; ++i) {
             ri[i] = new RankedIndividual(ranks[i], pop[i]);

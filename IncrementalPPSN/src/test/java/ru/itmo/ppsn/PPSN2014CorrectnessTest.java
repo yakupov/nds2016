@@ -1,6 +1,7 @@
 package ru.itmo.ppsn;
 
 import org.junit.Test;
+import ru.itmo.nds.util.RankedIndividual;
 import ru.itmo.mbuzdalov.FasterNonDominatedSorting;
 import ru.itmo.mbuzdalov.Hypercube;
 import ru.itmo.mbuzdalov.Tests;

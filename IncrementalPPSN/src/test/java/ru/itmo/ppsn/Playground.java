@@ -2,6 +2,7 @@ package ru.itmo.ppsn;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import ru.itmo.nds.util.RankedIndividual;
 import ru.itmo.util.MedianOfMediansQS;
 import ru.itmo.nds.PPSN2014;
 import ru.itmo.util.QuickSelect;

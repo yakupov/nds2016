@@ -1,4 +1,4 @@
-package ru.itmo.nds;
+package ru.itmo.nds.util;
 
 public class RankedPopulation {
     private final double[][] pop;

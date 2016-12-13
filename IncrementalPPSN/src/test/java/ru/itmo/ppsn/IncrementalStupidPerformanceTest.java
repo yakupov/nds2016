@@ -5,7 +5,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 import ru.itmo.nds.IncrementalPPSN;
 import ru.itmo.nds.PPSN2014;
-import ru.itmo.nds.RankedPopulation;
+import ru.itmo.nds.util.RankedPopulation;
 
 public class IncrementalStupidPerformanceTest {
     private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();

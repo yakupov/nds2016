@@ -1,5 +1,6 @@
 package ru.itmo.nds;
 
+import ru.itmo.nds.util.RankedPopulation;
 import ru.itmo.util.QuickSelect;
 
 import java.util.ArrayList;
