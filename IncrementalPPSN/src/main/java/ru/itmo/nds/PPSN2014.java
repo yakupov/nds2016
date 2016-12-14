@@ -3,9 +3,7 @@ package ru.itmo.nds;
 import ru.itmo.nds.util.RankedPopulation;
 import ru.itmo.util.QuickSelect;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Another implementation of a NDS, proposed in the following paper:
@@ -228,28 +226,38 @@ public class PPSN2014 {
         assert (pop.length == ranks.length);
         assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
 
-        List<Integer> tSet = new ArrayList<>();
-        tSet.add(workingSet.get(0));
+        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>((o1, o2) -> {
+            if (o1.getInd()[1] != o2.getInd()[1])
+                return Double.compare(o1.getInd()[1], o2.getInd()[1]);
+            if (o1.getInd()[0] != o2.getInd()[0])
+                return Double.compare(o1.getInd()[0], o2.getInd()[0]);
+            return Integer.compare(o1.getIndex(), o2.getIndex());
+        });
+        final Map<Integer, Integer> rankToIndex = new HashMap<>();
+
+        secondCoordSet.add(new IndexedIndividual(pop[workingSet.get(0)], workingSet.get(0)));
+        rankToIndex.put(ranks[workingSet.get(0)], workingSet.get(0));
 
         for (int i = 1; i < workingSet.size(); ++i) {
             final int currIndex = workingSet.get(i);
             final double[] currIndividual = pop[currIndex];
 
             int r = Integer.MIN_VALUE;
-            for (int t : tSet) {
+            for (IndexedIndividual ii: secondCoordSet.headSet(new IndexedIndividual(currIndividual, currIndex), true)) {
+                final int t = ii.getIndex();
                 if (pop[t][1] < currIndividual[1] || pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0]) {
                     r = Math.max(r, ranks[t]);
                 }
             }
             ranks[currIndex] = Math.max(r + 1, ranks[currIndex]);
 
-            final List<Integer> newTSet = new ArrayList<>(tSet.size() + 1);
-            for (int t : tSet) {
-                if (ranks[t] != ranks[currIndex])
-                    newTSet.add(t);
+            if (rankToIndex.containsKey(ranks[currIndex])) {
+                final int oldIndex = rankToIndex.get(ranks[currIndex]);
+                secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
             }
-            newTSet.add(currIndex);
-            tSet = newTSet;
+            rankToIndex.put(ranks[currIndex], currIndex);
+            secondCoordSet.add(new IndexedIndividual(pop[currIndex], currIndex));
+
         }
     }
 
@@ -340,30 +348,38 @@ public class PPSN2014 {
     protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         assert (pop.length == ranks.length);
 
-        List<Integer> tSet = new ArrayList<>();
+        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>((o1, o2) -> {
+            if (o1.getInd()[1] != o2.getInd()[1])
+                return Double.compare(o1.getInd()[1], o2.getInd()[1]);
+            if (o1.getInd()[0] != o2.getInd()[0])
+                return Double.compare(o1.getInd()[0], o2.getInd()[0]);
+            return Integer.compare(o1.getIndex(), o2.getIndex());
+        });
+        final Map<Integer, Integer> rankToIndex = new HashMap<>();
+
         int lIndex = 0;
         for (int h : hSet) {
             while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
                 final int l = lSet.get(lIndex);
-                final List<Integer> newTSet = new ArrayList<>(tSet.size() + 1);
-                boolean foundBetter = false;
-                for (int t : tSet) {
-                    if (ranks[t] != ranks[l])
-                        newTSet.add(t);
-                    else if (ranks[t] == ranks[l] && pop[t][1] <= pop[l][1])
-                        foundBetter = true;
-                }
 
-                if (!foundBetter) {
-                    newTSet.add(l);
-                    tSet = newTSet;
+                if (rankToIndex.containsKey(ranks[l])) {
+                    final int oldIndex = rankToIndex.get(ranks[l]);
+                    if (pop[oldIndex][1] > pop[l][1]) {
+                        rankToIndex.put(ranks[l], l);
+                        secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
+                        secondCoordSet.add(new IndexedIndividual(pop[l], l));
+                    }
+                } else {
+                    rankToIndex.put(ranks[l], l);
+                    secondCoordSet.add(new IndexedIndividual(pop[l], l));
                 }
 
                 lIndex++;
             }
 
             int r = Integer.MIN_VALUE;
-            for (int t : tSet) {
+            for (IndexedIndividual ii: secondCoordSet.headSet(new IndexedIndividual(pop[h], h), true)) {
+                final int t = ii.getIndex();
                 if (dominates(pop[t], pop[h], pop[h].length) < 0) { //TODO: check. Differs from Fortin for the case of equality. Same for NHB
                     //if (pop[t][1] < pop[h][1]) {
                     r = Math.max(r, ranks[t]);
