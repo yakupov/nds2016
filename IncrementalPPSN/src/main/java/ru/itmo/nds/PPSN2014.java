@@ -226,13 +226,7 @@ public class PPSN2014 {
         assert (pop.length == ranks.length);
         assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
 
-        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>((o1, o2) -> {
-            if (o1.getInd()[1] != o2.getInd()[1])
-                return Double.compare(o1.getInd()[1], o2.getInd()[1]);
-            if (o1.getInd()[0] != o2.getInd()[0])
-                return Double.compare(o1.getInd()[0], o2.getInd()[0]);
-            return Integer.compare(o1.getIndex(), o2.getIndex());
-        });
+        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>();
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
 
         secondCoordSet.add(new IndexedIndividual(pop[workingSet.get(0)], workingSet.get(0)));
@@ -251,13 +245,26 @@ public class PPSN2014 {
             }
             ranks[currIndex] = Math.max(r + 1, ranks[currIndex]);
 
-            if (rankToIndex.containsKey(ranks[currIndex])) {
-                final int oldIndex = rankToIndex.get(ranks[currIndex]);
-                secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
-            }
+            cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(currIndividual, currIndex), true), rankToIndex, ranks, ranks[currIndex]);
+
+//            if (rankToIndex.containsKey(ranks[currIndex])) {
+//                final int oldIndex = rankToIndex.get(ranks[currIndex]);
+//                secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
+//            }
             rankToIndex.put(ranks[currIndex], currIndex);
             secondCoordSet.add(new IndexedIndividual(pop[currIndex], currIndex));
 
+        }
+    }
+
+    //TODO: javadoc
+    private void cleanupTSet(NavigableSet<IndexedIndividual> secondCoordSet, Map<Integer, Integer> rankToIndex, int[] ranks, int currRank) {
+        for (Iterator<IndexedIndividual> it = secondCoordSet.iterator(); it.hasNext();) {
+            final IndexedIndividual individual = it.next();
+            if (ranks[individual.getIndex()] <= currRank) {
+                it.remove();
+                rankToIndex.remove(ranks[individual.getIndex()]);
+            }
         }
     }
 
@@ -348,13 +355,7 @@ public class PPSN2014 {
     protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         assert (pop.length == ranks.length);
 
-        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>((o1, o2) -> {
-            if (o1.getInd()[1] != o2.getInd()[1])
-                return Double.compare(o1.getInd()[1], o2.getInd()[1]);
-            if (o1.getInd()[0] != o2.getInd()[0])
-                return Double.compare(o1.getInd()[0], o2.getInd()[0]);
-            return Integer.compare(o1.getIndex(), o2.getIndex());
-        });
+        final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>();
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
 
         int lIndex = 0;
@@ -362,17 +363,23 @@ public class PPSN2014 {
             while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
                 final int l = lSet.get(lIndex);
 
-                if (rankToIndex.containsKey(ranks[l])) {
-                    final int oldIndex = rankToIndex.get(ranks[l]);
-                    if (pop[oldIndex][1] > pop[l][1]) {
-                        rankToIndex.put(ranks[l], l);
-                        secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
-                        secondCoordSet.add(new IndexedIndividual(pop[l], l));
-                    }
-                } else {
+                if (!rankToIndex.containsKey(ranks[l]) || pop[rankToIndex.get(ranks[l])][1] > pop[l][1]) {
+                    cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(pop[l], l), true), rankToIndex, ranks, ranks[l]);
                     rankToIndex.put(ranks[l], l);
                     secondCoordSet.add(new IndexedIndividual(pop[l], l));
                 }
+
+//                if (rankToIndex.containsKey(ranks[l])) {
+//                    final int oldIndex = rankToIndex.get(ranks[l]);
+//                    if (pop[oldIndex][1] > pop[l][1]) {
+//                        rankToIndex.put(ranks[l], l);
+//                        secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
+//                        secondCoordSet.add(new IndexedIndividual(pop[l], l));
+//                    }
+//                } else {
+//                    rankToIndex.put(ranks[l], l);
+//                    secondCoordSet.add(new IndexedIndividual(pop[l], l));
+//                }
 
                 lIndex++;
             }

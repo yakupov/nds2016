@@ -7,8 +7,6 @@
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>JMH benchmark sample: Java</name>
-
     <!--
        This is the demo/sample template build script for building Java benchmarks with JMH.
        Edit as needed.

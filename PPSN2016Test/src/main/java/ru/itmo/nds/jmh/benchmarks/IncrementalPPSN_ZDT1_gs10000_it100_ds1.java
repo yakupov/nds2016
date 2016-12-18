@@ -12,11 +12,16 @@ import java.util.Objects;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
+@BenchmarkMode(Mode.AverageTime)
+@OutputTimeUnit(TimeUnit.MILLISECONDS)
+@Warmup(iterations = 10)
+@Measurement(iterations = 5)
+@Fork(value = 3)
 public class IncrementalPPSN_ZDT1_gs10000_it100_ds1 {
     private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();
     private final PPSN2014 ppsn2014 = new PPSN2014();
 
-    protected FrontStorage frontStorage;
+    FrontStorage frontStorage;
 
     @Setup(Level.Trial)
     public void init() throws Exception {
@@ -37,303 +42,113 @@ public class IncrementalPPSN_ZDT1_gs10000_it100_ds1 {
                 .orElseThrow(() -> new IllegalArgumentException("Generation " + generationId + " not found in Store"));
     }
 
+    private int sortOneGeneration(int generationId, PPSN2014 sorter) {
+        final DoublesGeneration generation = getGeneration(generationId);
+        final double[] nextAddend = generation.getNextAddend();
+        final RankedPopulation rp = generation.getLexSortedRankedPop();
+
+        final RankedPopulation res = sorter.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
+        return res.getRanks().length;
+    }
+
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen0() {
-        final DoublesGeneration generation = getGeneration(0);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(0, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen0() {
-        final DoublesGeneration generation = getGeneration(0);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(0, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen10() {
-        final DoublesGeneration generation = getGeneration(10);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(10, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen10() {
-        final DoublesGeneration generation = getGeneration(10);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(10, ppsn2014);
     }
-
+/*
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen20() {
-        final DoublesGeneration generation = getGeneration(20);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(20, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen20() {
-        final DoublesGeneration generation = getGeneration(20);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(20, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen30() {
-        final DoublesGeneration generation = getGeneration(30);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(30, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen30() {
-        final DoublesGeneration generation = getGeneration(30);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(30, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen40() {
-        final DoublesGeneration generation = getGeneration(40);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(40, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen40() {
-        final DoublesGeneration generation = getGeneration(40);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(40, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen50() {
-        final DoublesGeneration generation = getGeneration(50);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(50, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen50() {
-        final DoublesGeneration generation = getGeneration(50);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(50, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen60() {
-        final DoublesGeneration generation = getGeneration(60);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(60, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen60() {
-        final DoublesGeneration generation = getGeneration(60);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(60, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen70() {
-        final DoublesGeneration generation = getGeneration(70);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(70, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen70() {
-        final DoublesGeneration generation = getGeneration(70);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(70, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen80() {
-        final DoublesGeneration generation = getGeneration(80);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(80, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen80() {
-        final DoublesGeneration generation = getGeneration(80);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(80, ppsn2014);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int incPpsnTestGen90() {
-        final DoublesGeneration generation = getGeneration(90);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(90, incrementalPPSN);
     }
 
     @Benchmark
-    @BenchmarkMode(Mode.AverageTime)
-    @OutputTimeUnit(TimeUnit.MILLISECONDS)
-    @Warmup(iterations = 10)
-    @Measurement(iterations = 5)
-    @Fork(value = 3)
     public int ppsn2014TestGen90() {
-        final DoublesGeneration generation = getGeneration(90);
-        final double[] nextAddend = generation.getNextAddend();
-        final RankedPopulation rp = generation.getLexSortedRankedPop();
-
-        final RankedPopulation res = ppsn2014.performIncrementalNds(rp.getPop(), rp.getRanks(), nextAddend);
-        return res.getRanks().length;
+        return sortOneGeneration(90, ppsn2014);
     }
+    */
 }

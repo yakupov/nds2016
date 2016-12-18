@@ -8,7 +8,8 @@ import java.io.InputStream;
 import java.util.Objects;
 
 /**
- * Created by Ilia on 14.12.2016.
+ * Perform all the same tests as in {@link IncrementalPPSN_ZDT1_gs10000_it100_ds1}
+ * but on another dataset
  */
 public class IncrementalPPSN_ZDT1_gs10000_it100_ds2 extends IncrementalPPSN_ZDT1_gs10000_it100_ds1 {
     @Setup(Level.Trial)
