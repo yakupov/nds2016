@@ -13,7 +13,7 @@ public class IncrementalPPSN_ZDT1_gs10000_it100_ds1 extends CommonPPSNBenchmarks
     @Override
     FrontStorage loadFrontsFromResources() throws Exception {
         final FrontStorage frontStorage = new FrontStorage();
-        try (InputStream is = IncrementalPPSN_ZDT1_gs10000_it100_ds2.class
+        try (InputStream is = IncrementalPPSN_ZDT1_gs10000_it100_ds1.class
                 .getResourceAsStream("ppsn/zdt1_gen10000_iter100_dataset1.json")) {
             Objects.requireNonNull(is, "Test data not found");
             frontStorage.deserialize(is);
