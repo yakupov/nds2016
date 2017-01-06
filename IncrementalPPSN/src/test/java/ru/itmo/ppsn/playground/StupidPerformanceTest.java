@@ -1,4 +1,4 @@
-package ru.itmo.ppsn;
+package ru.itmo.ppsn.playground;
 
 import org.junit.Ignore;
 import org.junit.Test;

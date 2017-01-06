@@ -3,11 +3,12 @@ package ru.itmo.nds.front_storage;
 import ru.itmo.nds.util.RankedIndividual;
 import ru.itmo.nds.util.RankedPopulation;
 
+import java.util.Arrays;
+
 /**
  * Generation of individuals of a type double[]
  */
 public class DoublesGeneration extends Generation<double[]> {
-
     public RankedPopulation getLexSortedRankedPop() {
         if (getFronts() == null) {
             return null;
@@ -30,6 +31,15 @@ public class DoublesGeneration extends Generation<double[]> {
             }
 
             final int[] sortedRanks = RankedIndividual.sortRanksForLexSortedPopulation(ranks, pop);
+            Arrays.sort(pop, (o1, o2) -> {
+                for (int i = 0; i < o1.length; ++i) {
+                    if (o1[i] < o2[i])
+                        return -1;
+                    else if (o1[i] > o2[i])
+                        return 1;
+                }
+                return 0;
+            });
             return new RankedPopulation(pop, sortedRanks);
         }
     }

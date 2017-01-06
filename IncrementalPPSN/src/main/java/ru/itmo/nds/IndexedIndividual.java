@@ -3,22 +3,23 @@ package ru.itmo.nds;
 import java.util.Arrays;
 
 /**
- * Created by Ilia on 14.12.2016.
+ * Utility data structure for sweeps in PPSN.
+ * In contains individuals' fitnesses and its index in the population array.
  */
-public class IndexedIndividual implements Comparable<IndexedIndividual> {
+class IndexedIndividual implements Comparable<IndexedIndividual> {
     private final double[] fitness;
     private final int index;
 
-    public IndexedIndividual(double[] fitness, int index) {
+    IndexedIndividual(double[] fitness, int index) {
         this.fitness = fitness;
         this.index = index;
     }
 
-    public double[] getFitness() {
+    private double[] getFitness() {
         return fitness;
     }
 
-    public int getIndex() {
+    int getIndex() {
         return index;
     }
 

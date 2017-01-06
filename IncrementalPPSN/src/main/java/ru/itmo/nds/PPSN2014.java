@@ -5,6 +5,8 @@ import ru.itmo.util.QuickSelect;
 
 import java.util.*;
 
+import static ru.itmo.nds.util.ComparisonUtils.dominates;
+
 /**
  * Another implementation of a NDS, proposed in the following paper:
  * <p>
@@ -23,12 +25,17 @@ import java.util.*;
 @SuppressWarnings({"UnnecessaryReturnStatement", "Convert2streamapi"})
 public class PPSN2014 {
     public static final String ENABLE_PPSN_TRACE_PROPERTY = "ru.itmo.ppsn.trace_to_stdout";
+    @SuppressWarnings("WeakerAccess")
+    public static final String ENABLE_PPSN_DEBUG_PROPERTY = "ru.itmo.ppsn.debug_on";
+
+    private final boolean traceToStdout;
+    private final boolean debugEnabled;
 
     private final QuickSelect quickSelect = new QuickSelect();
-    private final boolean traceToStdout;
 
     public PPSN2014() {
         traceToStdout = System.getProperty(ENABLE_PPSN_TRACE_PROPERTY) != null;
+        debugEnabled = System.getProperty(ENABLE_PPSN_DEBUG_PROPERTY) != null;
     }
 
     /**
@@ -40,8 +47,10 @@ public class PPSN2014 {
      * @return New sorted population and its ranks
      */
     public RankedPopulation performIncrementalNds(final double[][] sortedPop, final int[] ranks, final double[] addend) {
-        assert (ranks.length == sortedPop.length);
-        assert (sortedPop.length == 0 || addend.length == sortedPop[0].length);
+        if (debugEnabled) {
+            assert (ranks.length == sortedPop.length);
+            assert (sortedPop.length == 0 || addend.length == sortedPop[0].length);
+        }
 
         final int dim = addend.length;
         final double[][] newPop = new double[sortedPop.length + 1][];
@@ -82,21 +91,6 @@ public class PPSN2014 {
             newRanks[addendIndex] = addendRank;
             lSet.add(addendIndex);
         }
-
-//        System.out.println("O Pop: ");
-//        for (double[] d : sortedPop) {
-//            System.out.println("\t" + Arrays.toString(d));
-//        }
-//        System.out.println("Ranks: " + Arrays.toString(ranks));
-//        System.out.println("Addend: " + Arrays.toString(addend));
-//        System.out.println("N Pop: ");
-//        for (double[] d : newPop) {
-//            System.out.println("\t" + Arrays.toString(d));
-//        }
-//        System.out.println("Ranks: " + Arrays.toString(newRanks));
-//        System.out.println("L: " + lSet);
-//        System.out.println("H: " + hSet);
-
 
         ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
         ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
@@ -161,9 +155,11 @@ public class PPSN2014 {
      * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
      * @param level      Recursion level (used for logging)
      */
-    private void ndHelperA(double[][] pop, int[] ranks, int k, List<Integer> workingSet, int level) {
-        assert (pop.length == ranks.length);
-        assert (workingSet == null || workingSet.size() <= pop.length);
+    void ndHelperA(double[][] pop, int[] ranks, int k, List<Integer> workingSet, int level) {
+        if (debugEnabled) {
+            assert (pop.length == ranks.length);
+            assert (workingSet == null || workingSet.size() <= pop.length);
+        }
 
         if (traceToStdout) {
             logToStdout(level, "NDHelperA. K = " + k + ", workingSet = " + workingSet);
@@ -223,8 +219,10 @@ public class PPSN2014 {
      * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
      */
     protected void sweepA(double[][] pop, int[] ranks, List<Integer> workingSet) {
-        assert (pop.length == ranks.length);
-        assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
+        if (debugEnabled) {
+            assert (pop.length == ranks.length);
+            assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
+        }
 
         final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>();
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
@@ -237,7 +235,7 @@ public class PPSN2014 {
             final double[] currIndividual = pop[currIndex];
 
             int r = Integer.MIN_VALUE;
-            for (IndexedIndividual ii: secondCoordSet.headSet(new IndexedIndividual(currIndividual, currIndex), true)) {
+            for (IndexedIndividual ii : secondCoordSet.headSet(new IndexedIndividual(currIndividual, currIndex), true)) {
                 final int t = ii.getIndex();
                 if (pop[t][1] < currIndividual[1] || pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0]) {
                     r = Math.max(r, ranks[t]);
@@ -245,21 +243,25 @@ public class PPSN2014 {
             }
             ranks[currIndex] = Math.max(r + 1, ranks[currIndex]);
 
-            cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(currIndividual, currIndex), true), rankToIndex, ranks, ranks[currIndex]);
+            cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(currIndividual, currIndex), true),
+                    rankToIndex, ranks, ranks[currIndex]);
 
-//            if (rankToIndex.containsKey(ranks[currIndex])) {
-//                final int oldIndex = rankToIndex.get(ranks[currIndex]);
-//                secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
-//            }
             rankToIndex.put(ranks[currIndex], currIndex);
             secondCoordSet.add(new IndexedIndividual(pop[currIndex], currIndex));
 
         }
     }
 
-    //TODO: javadoc
+    /**
+     * Remove unnecessary points from the "staircase"
+     *
+     * @param secondCoordSet Set of points, lexicographically sorted by second coordinate
+     * @param rankToIndex    Maps rank to the lexicographically rightmost point with this rank
+     * @param ranks          Mapping from point indices to point ranks
+     * @param currRank       Rank of the next point to be added to the staircase
+     */
     private void cleanupTSet(NavigableSet<IndexedIndividual> secondCoordSet, Map<Integer, Integer> rankToIndex, int[] ranks, int currRank) {
-        for (Iterator<IndexedIndividual> it = secondCoordSet.iterator(); it.hasNext();) {
+        for (Iterator<IndexedIndividual> it = secondCoordSet.iterator(); it.hasNext(); ) {
             final IndexedIndividual individual = it.next();
             if (ranks[individual.getIndex()] <= currRank) {
                 it.remove();
@@ -279,8 +281,10 @@ public class PPSN2014 {
      * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
      * @param level Recursion level (used for logging)
      */
-    private void ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
-        assert (pop.length == ranks.length);
+    void ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
+        if (debugEnabled) {
+            assert (pop.length == ranks.length);
+        }
 
         if (traceToStdout) {
             logToStdout(level, ("NDHelperB. K = " + k + ", l = " + lSet + ", h = " + hSet));
@@ -353,7 +357,9 @@ public class PPSN2014 {
      * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
      */
     protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
-        assert (pop.length == ranks.length);
+        if (debugEnabled) {
+            assert (pop.length == ranks.length);
+        }
 
         final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>();
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
@@ -362,33 +368,18 @@ public class PPSN2014 {
         for (int h : hSet) {
             while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
                 final int l = lSet.get(lIndex);
-
                 if (!rankToIndex.containsKey(ranks[l]) || pop[rankToIndex.get(ranks[l])][1] > pop[l][1]) {
                     cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(pop[l], l), true), rankToIndex, ranks, ranks[l]);
                     rankToIndex.put(ranks[l], l);
                     secondCoordSet.add(new IndexedIndividual(pop[l], l));
                 }
-
-//                if (rankToIndex.containsKey(ranks[l])) {
-//                    final int oldIndex = rankToIndex.get(ranks[l]);
-//                    if (pop[oldIndex][1] > pop[l][1]) {
-//                        rankToIndex.put(ranks[l], l);
-//                        secondCoordSet.remove(new IndexedIndividual(pop[oldIndex], oldIndex));
-//                        secondCoordSet.add(new IndexedIndividual(pop[l], l));
-//                    }
-//                } else {
-//                    rankToIndex.put(ranks[l], l);
-//                    secondCoordSet.add(new IndexedIndividual(pop[l], l));
-//                }
-
                 lIndex++;
             }
 
             int r = Integer.MIN_VALUE;
-            for (IndexedIndividual ii: secondCoordSet.headSet(new IndexedIndividual(pop[h], h), true)) {
+            for (IndexedIndividual ii : secondCoordSet.headSet(new IndexedIndividual(pop[h], h), true)) {
                 final int t = ii.getIndex();
-                if (dominates(pop[t], pop[h], pop[h].length) < 0) { //TODO: check. Differs from Fortin for the case of equality. Same for NHB
-                    //if (pop[t][1] < pop[h][1]) {
+                if (dominates(pop[t], pop[h], pop[h].length) < 0) {
                     r = Math.max(r, ranks[t]);
                 }
             }
@@ -434,50 +425,6 @@ public class PPSN2014 {
     }
 
     /**
-     * Check the domination relation over the first K objectives.
-     *
-     * @param d1  First individual
-     * @param d2  Second individual
-     * @param dim Number of comparable coordinates in each individual (not max. index!)
-     *            In the most common max. compared index will be {@code dim} - 1
-     * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
-     */
-    int dominates(double[] d1, double[] d2, int dim) {
-        return dominatesByFirstCoordinates(d1, d2, dim, 0, false, false);
-    }
-
-    /**
-     * @param d1        First individual
-     * @param d2        Second individual
-     * @param dim       Number of comparable coordinates in each individual (not max. index!)
-     * @param currCoord Current comparable coordinate
-     * @param d1less    At least one coordinate of d1 is less than corresponding coordinate of d2
-     * @param d2less    At least one coordinate of d2 is less than corresponding coordinate of d1
-     * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
-     */
-    private int dominatesByFirstCoordinates(double[] d1, double[] d2, int dim, int currCoord, boolean d1less, boolean d2less) {
-        assert (d1 != null && d1.length >= dim && d2 != null && d2.length >= dim);
-        assert (currCoord < dim);
-
-        if (d1[currCoord] < d2[currCoord]) {
-            d1less = true;
-        } else if (d1[currCoord] > d2[currCoord]) {
-            d2less = true;
-        }
-
-        if (currCoord == dim - 1) {
-            if (d1less && d2less || !d1less && !d2less)
-                return 0;
-            else if (d1less)
-                return -1;
-            else
-                return 1;
-        } else {
-            return dominatesByFirstCoordinates(d1, d2, dim, currCoord + 1, d1less, d2less);
-        }
-    }
-
-    /**
      * Perform lexicographical comparison
      *
      * @param d1  First individual
@@ -485,7 +432,7 @@ public class PPSN2014 {
      * @param dim Number of comparable coordinates in each individual (not max. index!)
      * @return -1 if {@code d1} is lexicographically smaller than {@code d2}. 1 if larger. 0 if equal.
      */
-    private int lexCompare(double[] d1, double[] d2, int dim) {
+    int lexCompare(double[] d1, double[] d2, int dim) {
         assert (d1.length >= dim && d2.length >= dim);
 
         for (int i = 0; i < dim; ++i) {
