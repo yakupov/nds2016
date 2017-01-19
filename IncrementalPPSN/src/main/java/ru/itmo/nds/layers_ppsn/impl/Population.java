@@ -13,6 +13,10 @@ import java.util.List;
 public class Population implements IPopulation {
     private final ArrayList<INonDominationLevel> nonDominationLevels = new ArrayList<>();
 
+    private int lastNumberOfMovements = 0;
+    private int lastSumOfMovements = 0;
+
+
     @Override
     public List<INonDominationLevel> getLevels() {
         return nonDominationLevels;
@@ -38,6 +42,9 @@ public class Population implements IPopulation {
 
     @Override
     public int addPoint(double[] addend) {
+        lastNumberOfMovements = 0;
+        lastSumOfMovements = 0;
+
         final int rank = determineRank(addend);
         if (rank >= nonDominationLevels.size()) {
             final NonDominationLevel level = new NonDominationLevel();
@@ -48,6 +55,9 @@ public class Population implements IPopulation {
             int i = rank;
             int prevSize = -1;
             while (!addends.isEmpty() && i < nonDominationLevels.size()) {
+                ++lastNumberOfMovements;
+                lastSumOfMovements += addends.size();
+
                 if (prevSize == addends.size()) { //Whole level was pushed
                     final NonDominationLevel level = new NonDominationLevel();
                     level.getMembers().addAll(addends);
@@ -106,5 +116,12 @@ public class Population implements IPopulation {
             copy.getLevels().add(level.copy());
         }
         return copy;
+    }
+
+    public String getStats() {
+        return "Population{" +
+                "Number of times when point(s) were inserted into a ND level = " + lastNumberOfMovements +
+                ", Total number of (re-)inserted points = " + lastSumOfMovements +
+                '}';
     }
 }
