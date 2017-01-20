@@ -25,20 +25,34 @@ public class IncrementalPPSN extends PPSN2014 {
      */
     public RankedPopulation addRankedMembers(List<double[]> pop, int[] ranks, List<double[]> addends,
                                              @SuppressWarnings("SameParameterValue") int rankHint) { //TODO: UT
+        final double[] ultimateAddend = new double[addends.get(0).length];
+        for (int i = 0; i < ultimateAddend.length; ++i) {
+            ultimateAddend[i] = Double.POSITIVE_INFINITY;
+        }
+        for (double[] addend: addends) {
+            for (int i = 0; i < ultimateAddend.length; ++i) {
+                ultimateAddend[i] = Math.min(ultimateAddend[i], addend[i]);
+            }
+        }
+
         final double[][] newPop = new double[pop.size() + addends.size()][];
         final int[] newRanks = new int[newPop.length];
         final int dim = addends.get(0).length;
 
         int iPop = 0;
         int iAdd = 0;
-        final List<Integer> hSet = new ArrayList<>(ranks.length);
-        final List<Integer> lSet = new ArrayList<>(addends.size());
+        final List<Integer> hSet = new ArrayList<>(pop.size());
+        final List<Integer> lSet = new ArrayList<>(pop.size() + addends.size());
         for (int i = 0; i < newPop.length; ++i) {
             if (iAdd == addends.size() ||
                     iPop < pop.size() && lexCompare(pop.get(iPop), addends.get(iAdd), dim) <= 0) {
                 newPop[i] = pop.get(iPop);
                 newRanks[i] = ranks[iPop++];
-                hSet.add(i);
+
+                if (dominates(ultimateAddend, newPop[i], dim) >= 0)
+                    lSet.add(i);
+                else
+                    hSet.add(i);
             } else {
                 newPop[i] = addends.get(iAdd++);
                 newRanks[i] = rankHint;

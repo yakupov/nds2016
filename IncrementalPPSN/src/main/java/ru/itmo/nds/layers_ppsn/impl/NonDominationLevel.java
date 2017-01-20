@@ -5,6 +5,7 @@ import ru.itmo.nds.IncrementalPPSN;
 import ru.itmo.nds.util.RankedPopulation;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static ru.itmo.nds.util.ComparisonUtils.dominates;
@@ -24,7 +25,7 @@ public class NonDominationLevel implements INonDominationLevel {
         final int[] ranks = new int[members.size()];
         final RankedPopulation rp = sorter.performIncrementalNds(members.toArray(new double[members.size()][]), ranks, addend);
         final ArrayList<double[]> currLevel = new ArrayList<>(ranks.length + 1);
-        final ArrayList<double[]> nextLevel = new ArrayList<>(ranks.length + 1);
+        final ArrayList<double[]> nextLevel = new ArrayList<>(ranks.length);
         for (int i = 0; i < rp.getPop().length; ++i) {
             if (rp.getRanks()[i] == 0)
                 currLevel.add(rp.getPop()[i]);
@@ -39,8 +40,8 @@ public class NonDominationLevel implements INonDominationLevel {
     public ArrayList<double[]> addMembers(List<double[]> addends) {
         final int[] ranks = new int[members.size()];
         final RankedPopulation rp = sorter.addRankedMembers(members, ranks, addends, 0);
-        final ArrayList<double[]> currLevel = new ArrayList<>(ranks.length + 1);
-        final ArrayList<double[]> nextLevel = new ArrayList<>(ranks.length + 1);
+        final ArrayList<double[]> currLevel = new ArrayList<>(ranks.length + addends.size());
+        final ArrayList<double[]> nextLevel = new ArrayList<>(ranks.length);
         for (int i = 0; i < rp.getPop().length; ++i) {
             if (rp.getRanks()[i] == 0)
                 currLevel.add(rp.getPop()[i]);
@@ -67,5 +68,14 @@ public class NonDominationLevel implements INonDominationLevel {
         final NonDominationLevel copy = new NonDominationLevel();
         copy.getMembers().addAll(members);
         return copy;
+    }
+
+    @Override
+    public String toString() {
+        final List<String> stringList = new ArrayList<>(members.size());
+        for (double[] d: members) {
+            stringList.add(Arrays.toString(d));
+        }
+        return "members=" + stringList;
     }
 }

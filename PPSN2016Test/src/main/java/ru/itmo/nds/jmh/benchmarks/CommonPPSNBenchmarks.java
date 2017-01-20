@@ -11,10 +11,7 @@ import ru.itmo.nds.layers_ppsn.impl.NonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
 import ru.itmo.nds.util.RankedPopulation;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @State(Scope.Benchmark)
@@ -55,6 +52,17 @@ public abstract class CommonPPSNBenchmarks {
                     .map(f -> {
                         final NonDominationLevel level = new NonDominationLevel();
                         level.getMembers().addAll(f.getFitnesses());
+
+                        (level.getMembers()).sort((o1, o2) -> {
+                            for (int objIndex = 0; objIndex < o1.length; ++objIndex) {
+                                if (o1[objIndex] < o2[objIndex])
+                                    return -1;
+                                else if (o1[objIndex] > o2[objIndex])
+                                    return 1;
+                            }
+                            return 0;
+                        });
+
                         return level;
                     })
                     .forEach(level -> population.getLevels().add(level));
@@ -71,11 +79,21 @@ public abstract class CommonPPSNBenchmarks {
         return res.getRanks().length;
     }
 
-    private int sortUsingLevelPPSN(int generationId) {
+    int sortUsingLevelPPSN(int generationId, boolean debug) {
         final PpsnTestData testData = Objects.requireNonNull(preparedTestData.get(generationId),
                 "no cached test data for generation id " + generationId);
         final Population population = testData.getPopulation().copy();
-        return population.addPoint(testData.getNextAdddend());
+        final int rs = population.addPoint(testData.getNextAdddend());
+        if (debug) {
+            System.out.println("Stats for " + getClass().getSimpleName() + ", gen " + generationId + ":");
+            System.out.println('\t' + population.getStats());
+            //System.out.println('\t' + population.toString());
+        }
+        return rs;
+    }
+
+    private int sortUsingLevelPPSN(int generationId) {
+        return sortUsingLevelPPSN(generationId, false);
     }
 
     @Benchmark

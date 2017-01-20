@@ -124,4 +124,9 @@ public class Population implements IPopulation {
                 ", Total number of (re-)inserted points = " + lastSumOfMovements +
                 '}';
     }
+
+    @Override
+    public String toString() {
+        return "Population levels {" + nonDominationLevels + '}';
+    }
 }
