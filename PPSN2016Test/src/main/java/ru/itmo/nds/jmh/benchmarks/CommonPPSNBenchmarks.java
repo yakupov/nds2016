@@ -7,8 +7,10 @@ import ru.itmo.nds.front_storage.DoublesGeneration;
 import ru.itmo.nds.front_storage.Front;
 import ru.itmo.nds.front_storage.FrontStorage;
 import ru.itmo.nds.jmh.benchmarks.utils.PpsnTestData;
+import ru.itmo.nds.layers_ppsn.INonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.NonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
+import ru.itmo.nds.reference.ENLUSorter;
 import ru.itmo.nds.util.RankedPopulation;
 
 import java.util.*;
@@ -96,6 +98,40 @@ public abstract class CommonPPSNBenchmarks {
         return sortUsingLevelPPSN(generationId, false);
     }
 
+    int sortUsingEnlu(int generationId, boolean validate) {
+        final PpsnTestData testData = Objects.requireNonNull(preparedTestData.get(generationId),
+                "no cached test data for generation id " + generationId);
+        final Population population = testData.getPopulation();
+
+        final Set<double[]> enluIndividuals = new HashSet<>();
+        final List<Set<double[]>> enluLayers = new ArrayList<>(population.getLevels().size());
+        for (INonDominationLevel nonDominationLevel: population.getLevels()) {
+            final Set<double[]> enluLayer = new HashSet<>(nonDominationLevel.getMembers().size());
+            for (double[] individual : nonDominationLevel.getMembers()) {
+                enluLayer.add(individual);
+                enluIndividuals.add(individual);
+            }
+            enluLayers.add(enluLayer);
+        }
+
+        final ENLUSorter sorter = new ENLUSorter(enluIndividuals, enluLayers);
+
+        final int rs = sorter.addPoint(testData.getNextAdddend());
+        if (validate) {
+            sorter.validate();
+        }
+        return rs;
+    }
+
+    private int sortUsingEnlu(int generationId) {
+        return sortUsingEnlu(generationId, false);
+    }
+
+    @Benchmark
+    public int enluTestGen0() {
+        return sortUsingEnlu(0);
+    }
+
     @Benchmark
     public int incPpsnTestGen0() {
         return sortOneGeneration(0, incrementalPPSN);
@@ -109,6 +145,11 @@ public abstract class CommonPPSNBenchmarks {
     @Benchmark
     public int ppsn2014TestGen0() {
         return sortOneGeneration(0, ppsn2014);
+    }
+
+    @Benchmark
+    public int enluTestGen10() {
+        return sortUsingEnlu(10);
     }
 
     @Benchmark
@@ -127,6 +168,11 @@ public abstract class CommonPPSNBenchmarks {
     }
 
     @Benchmark
+    public int enluTestGen20() {
+        return sortUsingEnlu(20);
+    }
+
+    @Benchmark
     public int incPpsnTestGen20() {
         return sortOneGeneration(20, incrementalPPSN);
     }
@@ -139,6 +185,11 @@ public abstract class CommonPPSNBenchmarks {
     @Benchmark
     public int ppsn2014TestGen20() {
         return sortOneGeneration(20, ppsn2014);
+    }
+
+    @Benchmark
+    public int enluTestGen30() {
+        return sortUsingEnlu(30);
     }
 
     @Benchmark
@@ -157,6 +208,11 @@ public abstract class CommonPPSNBenchmarks {
     }
 
     @Benchmark
+    public int enluTestGen40() {
+        return sortUsingEnlu(40);
+    }
+
+    @Benchmark
     public int incPpsnTestGen40() {
         return sortOneGeneration(40, incrementalPPSN);
     }
@@ -169,6 +225,11 @@ public abstract class CommonPPSNBenchmarks {
     @Benchmark
     public int ppsn2014TestGen40() {
         return sortOneGeneration(40, ppsn2014);
+    }
+
+    @Benchmark
+    public int enluTestGen50() {
+        return sortUsingEnlu(50);
     }
 
     @Benchmark
@@ -187,6 +248,11 @@ public abstract class CommonPPSNBenchmarks {
     }
 
     @Benchmark
+    public int enluTestGen60() {
+        return sortUsingEnlu(60);
+    }
+
+    @Benchmark
     public int incPpsnTestGen60() {
         return sortOneGeneration(60, incrementalPPSN);
     }
@@ -199,6 +265,11 @@ public abstract class CommonPPSNBenchmarks {
     @Benchmark
     public int ppsn2014TestGen60() {
         return sortOneGeneration(60, ppsn2014);
+    }
+
+    @Benchmark
+    public int enluTestGen70() {
+        return sortUsingEnlu(70);
     }
 
     @Benchmark
@@ -217,6 +288,11 @@ public abstract class CommonPPSNBenchmarks {
     }
 
     @Benchmark
+    public int enluTestGen80() {
+        return sortUsingEnlu(80);
+    }
+
+    @Benchmark
     public int incPpsnTestGen80() {
         return sortOneGeneration(80, incrementalPPSN);
     }
@@ -229,6 +305,11 @@ public abstract class CommonPPSNBenchmarks {
     @Benchmark
     public int ppsn2014TestGen80() {
         return sortOneGeneration(80, ppsn2014);
+    }
+
+    @Benchmark
+    public int enluTestGen90() {
+        return sortUsingEnlu(90);
     }
 
     @Benchmark
