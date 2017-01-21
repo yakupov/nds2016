@@ -2,6 +2,7 @@ package ru.itmo.nds.jmh.benchmarks;
 
 import org.junit.Ignore;
 import org.junit.Test;
+import ru.itmo.nds.jmh.benchmarks.dtlz3d.IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2;
 
 /**
  * Playground for obtaining debug data from benchmarks on a single run.
@@ -10,7 +11,7 @@ public class BenchmarkAnalyzer {
     @Test
     @Ignore
     public void obtainStatisticsLevelPpsnDtlz7_1() throws Exception {
-        final IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2 testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
         testClass.prepareTestData();
 
         System.out.println(testClass.sortUsingLevelPPSN(0, true));
@@ -32,7 +33,7 @@ public class BenchmarkAnalyzer {
     @Test
     @Ignore
     public void spinLevelPpsnDtlz7_1() throws Exception {
-        final IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2 testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
@@ -45,7 +46,7 @@ public class BenchmarkAnalyzer {
     @Test
     @Ignore
     public void spinLevelPpsnDtlz7_2() throws Exception {
-        final IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2 testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
@@ -58,7 +59,7 @@ public class BenchmarkAnalyzer {
     @Test
     @Ignore
     public void spinIncPpsnDtlz7_2() throws Exception {
-        final IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2 testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {

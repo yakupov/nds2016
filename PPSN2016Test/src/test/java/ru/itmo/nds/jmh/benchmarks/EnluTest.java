@@ -1,6 +1,7 @@
 package ru.itmo.nds.jmh.benchmarks;
 
 import org.junit.Test;
+import ru.itmo.nds.jmh.benchmarks.dtlz3d.IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2;
 
 /**
  * UT fo ENLU
@@ -8,7 +9,7 @@ import org.junit.Test;
 public class EnluTest {
     @Test
     public void testDtlz7Ds2() throws Exception {
-        final IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2 testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2();
         testClass.prepareTestData();
 
         testClass.sortUsingEnlu(0, true);
