@@ -56,7 +56,7 @@ public class PPSN2014 {
         final double[][] newPop = new double[sortedPop.length + 1][];
         final int[] newRanks = new int[ranks.length + 1];
         final List<Integer> hSet = new ArrayList<>(ranks.length);
-        final List<Integer> lSet = new ArrayList<>(ranks.length);
+        //final List<Integer> lSet = new ArrayList<>(ranks.length);
 
         int writeIndex = 0;
         int addendIndex = -1;
@@ -66,7 +66,7 @@ public class PPSN2014 {
                 addendIndex = writeIndex;
                 newPop[addendIndex] = addend;
                 newRanks[addendIndex] = addendRank;
-                lSet.add(addendIndex);
+                //lSet.add(addendIndex);
                 writeIndex++;
             }
 
@@ -77,7 +77,7 @@ public class PPSN2014 {
             if (dom > 0) {
                 hSet.add(writeIndex);
             } else {
-                lSet.add(writeIndex);
+                //lSet.add(writeIndex);
                 if (dom < 0)
                     addendRank = Math.max(addendRank, ranks[i] + 1);
             }
@@ -89,10 +89,11 @@ public class PPSN2014 {
             addendIndex = newPop.length - 1;
             newPop[addendIndex] = addend;
             newRanks[addendIndex] = addendRank;
-            lSet.add(addendIndex);
+            //lSet.add(addendIndex);
         }
 
-        ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
+        //ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
+        ndHelperB(newPop, newRanks, dim - 1, Collections.singletonList(addendIndex), hSet, 0);
         ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
 
         return new RankedPopulation(newPop, newRanks);

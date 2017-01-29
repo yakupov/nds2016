@@ -12,6 +12,8 @@ import ru.itmo.nds.util.RankedPopulation;
 import java.util.*;
 
 public abstract class AbstractBenchmark {
+    private final PPSN2014 ppsn2014 = new PPSN2014();
+
     protected abstract Map<Integer, PpsnTestData> getPreparedTestData();
 
     protected DoublesGeneration getGeneration(FrontStorage frontStorage, int generationId) {
@@ -74,6 +76,18 @@ public abstract class AbstractBenchmark {
 
     protected int sortUsingEnlu(int generationId) {
         return sortUsingEnlu(generationId, false);
+    }
+
+    protected int sortFullyUsingPpsn(int generationId) {
+        final PpsnTestData testData = Objects.requireNonNull(getPreparedTestData().get(generationId),
+                "no cached test data for generation id " + generationId);
+
+        final double[][] oldPop = testData.getPopulation().toRankedPopulation().getPop();
+        final double[][] newPop = Arrays.copyOf(oldPop, oldPop.length + 1);
+        newPop[newPop.length - 1] = testData.getNextAdddend();
+
+        final int[] ranks = ppsn2014.performNds(newPop);
+        return ranks[0];
     }
 
 }

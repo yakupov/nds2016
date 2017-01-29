@@ -49,9 +49,7 @@ public class IncrementalPPSN extends PPSN2014 {
                 newPop[i] = pop.get(iPop);
                 newRanks[i] = ranks[iPop++];
 
-                if (dominates(ultimateAddend, newPop[i], dim) >= 0)
-                    lSet.add(i);
-                else
+                if (dominates(ultimateAddend, newPop[i], dim) < 0)
                     hSet.add(i);
             } else {
                 newPop[i] = addends.get(iAdd++);

@@ -84,18 +84,23 @@ public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
     }
 
     @Benchmark
-    public int incPpsnTestDataset0() {
+    public int incPpsnFastSweepDataset0() {
         return sortOneGeneration(0, incrementalPPSN);
     }
 
     @Benchmark
-    public int levelPpsnTestDataset0() {
+    public int incPpsnDataset0() {
+        return sortOneGeneration(0, ppsn2014);
+    }
+
+    @Benchmark
+    public int levelPpsnDataset0() {
         return sortUsingLevelPPSN(0);
     }
 
     @Benchmark
-    public int ppsn2014TestDataset0() {
-        return sortOneGeneration(0, ppsn2014);
+    public int oldPpsnDataset0() {
+        return sortFullyUsingPpsn(0);
     }
 
     @Benchmark
@@ -104,37 +109,47 @@ public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
     }
 
     @Benchmark
-    public int incPpsnTestDataset1() {
+    public int incPpsnFastSweepDataset1() {
         return sortOneGeneration(1, incrementalPPSN);
     }
 
     @Benchmark
-    public int levelPpsnTestDataset1() {
+    public int incPpsnDataset1() {
+        return sortOneGeneration(1, ppsn2014);
+    }
+
+    @Benchmark
+    public int levelPpsnDataset1() {
         return sortUsingLevelPPSN(1);
     }
 
     @Benchmark
-    public int ppsn2014TestDataset1() {
-        return sortOneGeneration(1, ppsn2014);
+    public int oldPpsnDataset1() {
+        return sortFullyUsingPpsn(1);
     }
-
+    
     @Benchmark
     public int enluTestDataset2() {
         return sortUsingEnlu(2);
     }
 
     @Benchmark
-    public int incPpsnTestDataset2() {
+    public int incPpsnFastSweepDataset2() {
         return sortOneGeneration(2, incrementalPPSN);
     }
 
     @Benchmark
-    public int levelPpsnTestDataset2() {
+    public int incPpsnDataset2() {
+        return sortOneGeneration(2, ppsn2014);
+    }
+
+    @Benchmark
+    public int levelPpsnDataset2() {
         return sortUsingLevelPPSN(2);
     }
 
     @Benchmark
-    public int ppsn2014TestDataset2() {
-        return sortOneGeneration(2, ppsn2014);
+    public int oldPpsnDataset2() {
+        return sortFullyUsingPpsn(2);
     }
 }
