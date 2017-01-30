@@ -157,4 +157,17 @@ public class GetResults {
             storage.serialize(fos);
         }
     }
+
+    @Ignore
+    @Test
+    public void nsga2TestDtlz1() throws Exception {
+        final int[] dimensions = new int[] {4, 6, 8, 10};
+        final int nDatasets = 2;
+        for (int dim: dimensions) {
+            for (int i = 0; i < nDatasets; ++i) {
+                doTest(new DTLZ1(dim), i);
+            }
+        }
+    }
+
 }
