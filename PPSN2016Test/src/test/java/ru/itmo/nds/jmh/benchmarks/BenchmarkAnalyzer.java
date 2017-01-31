@@ -50,7 +50,7 @@ public class BenchmarkAnalyzer {
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
-            if (testClass.levelPpsnTestGen60() == 42) {
+            if (testClass.levelPpsnGen60() == 42) {
                 break;
             }
         }
@@ -63,7 +63,7 @@ public class BenchmarkAnalyzer {
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
-            if (testClass.incPpsnTestGen60() == 42) {
+            if (testClass.incPpsnGen60() == 42) {
                 break;
             }
         }

@@ -11,15 +11,14 @@ import ru.itmo.nds.layers_ppsn.impl.NonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
 import ru.itmo.nds.util.RankedPopulation;
 
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @State(Scope.Benchmark)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 6)
+@Warmup(iterations = 12)
 @Measurement(iterations = 4)
 @Fork(value = 2)
 public abstract class AbstractDtlzZdtBenchmark extends AbstractBenchmark {
@@ -27,6 +26,7 @@ public abstract class AbstractDtlzZdtBenchmark extends AbstractBenchmark {
     private final PPSN2014 ppsn2014 = new PPSN2014();
 
     private Map<Integer, PpsnTestData> preparedTestData;
+    private FrontStorage frontStorage;
 
     @Override
     protected Map<Integer, PpsnTestData> getPreparedTestData() {
@@ -36,9 +36,11 @@ public abstract class AbstractDtlzZdtBenchmark extends AbstractBenchmark {
     protected abstract FrontStorage loadFrontsFromResources() throws Exception;
 
     @SuppressWarnings("WeakerAccess")
-    @Setup(Level.Trial)
+    @Setup(Level.Invocation)
     public void prepareTestData() throws Exception {
-        final FrontStorage frontStorage = loadFrontsFromResources();
+        if (frontStorage == null)
+            frontStorage = loadFrontsFromResources();
+
         preparedTestData = new HashMap<>();
 
         for (int i = 0; i <= 90; i += 10) {
@@ -67,7 +69,18 @@ public abstract class AbstractDtlzZdtBenchmark extends AbstractBenchmark {
                     })
                     .forEach(level -> population.getLevels().add(level));
 
-            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population));
+            final Set<double[]> enluIndividuals = new HashSet<>();
+            final List<Set<double[]>> enluLayers = generation.getFronts().stream()
+                    .sorted(Comparator.comparingInt(Front::getId))
+                    .map(f -> {
+                        final Set<double[]> enluLayer = new HashSet<>();
+                        enluLayer.addAll(f.getFitnesses());
+                        enluIndividuals.addAll(f.getFitnesses());
+                        return enluLayer;
+                    })
+                    .collect(Collectors.toList());
+
+            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population, enluIndividuals, enluLayers));
         }
     }
 
