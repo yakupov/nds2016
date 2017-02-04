@@ -93,8 +93,8 @@ public class PPSN2014 {
         }
 
         //ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
-        ndHelperB(newPop, newRanks, dim - 1, Collections.singletonList(addendIndex), hSet, 0);
-        ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
+        if (ndHelperB(newPop, newRanks, dim - 1, Collections.singletonList(addendIndex), hSet, 0))
+            ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
 
         return new RankedPopulation(newPop, newRanks);
     }
