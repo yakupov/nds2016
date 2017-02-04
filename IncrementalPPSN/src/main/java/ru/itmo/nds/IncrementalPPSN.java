@@ -14,7 +14,8 @@ import static ru.itmo.nds.util.ComparisonUtils.dominates;
  */
 public class IncrementalPPSN extends PPSN2014 {
     /**
-     * Add a set of already evaluated points of the same rank to the sorted population
+     * Add a set of already evaluated points of the same rank to the sorted population,
+     * if ALL POINTS IN POP HAVE THE SAME RANK
      *
      * @param pop Sorted population
      * @param ranks Ranks of the members of {@code pop}
@@ -59,7 +60,7 @@ public class IncrementalPPSN extends PPSN2014 {
         }
 
         ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
-        ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
+        //ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
 
         return new RankedPopulation(newPop, newRanks);
     }
@@ -88,13 +89,14 @@ public class IncrementalPPSN extends PPSN2014 {
     }
 
     @Override
-    protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
+    protected boolean sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         if (lSet == null || lSet.isEmpty() || hSet == null || hSet.isEmpty())
-            return;
+            return false;
 
         final Map<Integer, Integer> rightmostStairs = new HashMap<>(); //From rank to index
 
         int lIndex = 0;
+        boolean rankChanged = false;
         for (int h : hSet) {
             while (lIndex < lSet.size() && lSet.get(lIndex) < h) {
                 final int l = lSet.get(lIndex);
@@ -112,9 +114,12 @@ public class IncrementalPPSN extends PPSN2014 {
 
             if (rightmostStairs.containsKey(ranks[h])) {
                 final int t = rightmostStairs.get(ranks[h]);
-                if (dominates(pop[t], pop[h], pop[t].length) < 0)
+                if (dominates(pop[t], pop[h], pop[t].length) < 0) {
                     ++ranks[h];
+                    rankChanged = true;
+                }
             }
         }
+        return rankChanged;
     }
 }

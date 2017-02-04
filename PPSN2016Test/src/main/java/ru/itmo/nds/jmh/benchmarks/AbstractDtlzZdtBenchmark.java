@@ -9,6 +9,7 @@ import ru.itmo.nds.front_storage.FrontStorage;
 import ru.itmo.nds.jmh.benchmarks.utils.PpsnTestData;
 import ru.itmo.nds.layers_ppsn.impl.NonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
+import ru.itmo.nds.reference.treap2015.TreapPopulation;
 import ru.itmo.nds.util.RankedPopulation;
 
 import java.util.*;
@@ -80,7 +81,7 @@ public abstract class AbstractDtlzZdtBenchmark extends AbstractBenchmark {
                     })
                     .collect(Collectors.toList());
 
-            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population, enluIndividuals, enluLayers));
+            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population, null, enluIndividuals, enluLayers));
         }
     }
 

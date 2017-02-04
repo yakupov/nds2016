@@ -281,8 +281,10 @@ public class PPSN2014 {
      * @param lSet  Lower set (its ranks are already calculated). Must be sorted.
      * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
      * @param level Recursion level (used for logging)
+     *
+     * @return whether at least one individual has changed its rank
      */
-    void ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
+    boolean ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
         }
@@ -292,16 +294,20 @@ public class PPSN2014 {
         }
 
         if (lSet == null || lSet.isEmpty() || hSet == null || hSet.isEmpty()) {
-            return;
+            return false;
         } else if (lSet.size() == 1 || hSet.size() == 1) {
+            boolean rankChanged = false;
             for (int h : hSet) {
                 for (int l : lSet) {
-                    if (dominates(pop[l], pop[h], pop[l].length) < 0)
-                        ranks[h] = Math.max(ranks[h], ranks[l] + 1);
+                    if (dominates(pop[l], pop[h], pop[l].length) < 0 && ranks[l] + 1 > ranks[h]) {
+                        ranks[h] = ranks[l] + 1;
+                        rankChanged = true;
+                    }
                 }
             }
+            return rankChanged;
         } else if (k == 1) {
-            sweepB(pop, ranks, lSet, hSet);
+            return sweepB(pop, ranks, lSet, hSet);
         } else {
             double lMin = Double.POSITIVE_INFINITY;
             double lMax = Double.NEGATIVE_INFINITY;
@@ -318,7 +324,7 @@ public class PPSN2014 {
             }
 
             if (lMax <= hMin) {
-                ndHelperB(pop, ranks, k - 1, lSet, hSet, level + 1);
+                return ndHelperB(pop, ranks, k - 1, lSet, hSet, level + 1);
             } else if (lMin <= hMax) {
                 final double[] kth = new double[hSet.size() + lSet.size()];
                 for (int i = 0; i < lSet.size(); ++i)
@@ -338,14 +344,17 @@ public class PPSN2014 {
                 final List<Integer> h2 = new ArrayList<>();
                 split(pop, k, median, hSet, l2, m2, h2);
 
-                ndHelperB(pop, ranks, k, l1, l2, level + 1);
-                ndHelperB(pop, ranks, k - 1, l1, m2, level + 1);
-                ndHelperB(pop, ranks, k - 1, m1, m2, level + 1);
-                ndHelperB(pop, ranks, k - 1, l1m1, h2, level + 1);
-                ndHelperB(pop, ranks, k, h1, h2, level + 1);
-            }
-        }
+                boolean rankChanged = ndHelperB(pop, ranks, k, l1, l2, level + 1);
+                rankChanged |= ndHelperB(pop, ranks, k - 1, l1, m2, level + 1);
+                rankChanged |= ndHelperB(pop, ranks, k - 1, m1, m2, level + 1);
+                rankChanged |= ndHelperB(pop, ranks, k - 1, l1m1, h2, level + 1);
+                rankChanged |= ndHelperB(pop, ranks, k, h1, h2, level + 1);
 
+                return rankChanged;
+            }
+
+            return false;
+        }
     }
 
     /**
@@ -356,8 +365,10 @@ public class PPSN2014 {
      * @param ranks ranks[i] is the rank of individual pop[i]
      * @param lSet  Lower set (its ranks are already calculated). Must be sorted.
      * @param hSet  Higher set (its ranks are to be updated). Must be sorted.
+     *
+     * @return whether at least one individual has changed its rank
      */
-    protected void sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
+    protected boolean sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
         }
@@ -366,6 +377,7 @@ public class PPSN2014 {
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
 
         int lIndex = 0;
+        boolean rankChanged = false;
         for (int h : hSet) {
             while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
                 final int l = lSet.get(lIndex);
@@ -384,8 +396,14 @@ public class PPSN2014 {
                     r = Math.max(r, ranks[t]);
                 }
             }
-            ranks[h] = Math.max(ranks[h], r + 1);
+
+            if (r + 1 > ranks[h]) {
+                ranks[h] = r + 1;
+                rankChanged = true;
+            }
         }
+
+        return rankChanged;
     }
 
     /*

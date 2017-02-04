@@ -3,11 +3,12 @@ package ru.itmo.nds.jmh.benchmarks;
 import org.junit.Ignore;
 import org.junit.Test;
 import ru.itmo.nds.jmh.benchmarks.dtlz3d.IncrementalPPSN_DTLZ7_dim3_gs10000_it100_ds2;
+import ru.itmo.nds.jmh.benchmarks.dtlzNd.IncrementalPPSN_DTLZ2_dim10_gs10000_it100_ds1;
 
 /**
  * Playground for obtaining debug data from benchmarks on a single run.
  */
-public class BenchmarkAnalyzer {
+public class BenchmarkAnalyzerTest {
     @Test
     @Ignore
     public void obtainStatisticsLevelPpsnDtlz7_1() throws Exception {
@@ -29,6 +30,23 @@ public class BenchmarkAnalyzer {
         System.out.println(testClass.sortUsingLevelPPSN(90, true));
         System.out.println();
     }
+
+    @Test
+    //@Ignore
+    public void obtainStatisticsLevelPpsnDtlz2_dim10() throws Exception {
+        final AbstractDtlzZdtBenchmark testClass = new IncrementalPPSN_DTLZ2_dim10_gs10000_it100_ds1();
+        testClass.prepareTestData();
+
+        System.out.println(testClass.sortUsingLevelPPSN(0, true));
+        System.out.println();
+        System.out.println(testClass.sortUsingLevelPPSN(30, true));
+        System.out.println();
+        System.out.println(testClass.sortUsingLevelPPSN(60, true));
+        System.out.println();
+        System.out.println(testClass.sortUsingLevelPPSN(90, true));
+        System.out.println();
+    }
+
 
     @Test
     @Ignore

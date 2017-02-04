@@ -1,32 +1,20 @@
-package ru.itmo.nds.jmh.benchmarks.uniform;
+package ru.itmo.nds.jmh.benchmarks;
 
 import org.openjdk.jmh.annotations.*;
-import ru.itmo.nds.IncrementalPPSN;
-import ru.itmo.nds.PPSN2014;
 import ru.itmo.nds.front_storage.DoublesGeneration;
 import ru.itmo.nds.front_storage.Front;
 import ru.itmo.nds.front_storage.FrontStorage;
-import ru.itmo.nds.jmh.benchmarks.AbstractBenchmark;
 import ru.itmo.nds.jmh.benchmarks.utils.PpsnTestData;
 import ru.itmo.nds.layers_ppsn.impl.NonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
+import ru.itmo.nds.reference.treap2015.Double2DIndividual;
+import ru.itmo.nds.reference.treap2015.TreapPopulation;
 import ru.itmo.nds.util.RankedPopulation;
 
-import java.io.InputStream;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-@State(Scope.Benchmark)
-@BenchmarkMode(Mode.AverageTime)
-@OutputTimeUnit(TimeUnit.MICROSECONDS)
-@Warmup(iterations = 12)
-@Measurement(iterations = 4)
-@Fork(value = 2)
-public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
-    private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();
-    private final PPSN2014 ppsn2014 = new PPSN2014();
-
+public abstract class AbstractZdtBenchmark extends AbstractDtlzZdtBenchmark {
     private Map<Integer, PpsnTestData> preparedTestData;
     private FrontStorage frontStorage;
 
@@ -37,19 +25,14 @@ public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
 
     @SuppressWarnings("WeakerAccess")
     @Setup(Level.Invocation)
+    @Override
     public void prepareTestData() throws Exception {
-        if (frontStorage == null) {
-            frontStorage = new FrontStorage();
-            try (InputStream is = Uniform_dim3_gs10000_ds1.class
-                    .getResourceAsStream("uniform_dim3_gen10000_dataset1.json")) {
-                Objects.requireNonNull(is, "Test data not found");
-                frontStorage.deserialize(is);
-            }
-        }
+        if (frontStorage == null)
+            frontStorage = loadFrontsFromResources();
 
         preparedTestData = new HashMap<>();
 
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i <= 90; i += 10) {
             final DoublesGeneration generation = getGeneration(frontStorage, i);
             final double[] nextAddend = generation.getNextAddend();
             final RankedPopulation rp = generation.getLexSortedRankedPop();
@@ -86,81 +69,81 @@ public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
                     })
                     .collect(Collectors.toList());
 
-            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population, null, enluIndividuals, enluLayers));        }
+            final TreapPopulation treapPopulation = new TreapPopulation();
+            for (Set<double[]> layer : enluLayers) {
+                for (double[] ind: layer) {
+                    treapPopulation.addPoint(new Double2DIndividual(ind));
+                }
+            }
+
+            preparedTestData.put(i, new PpsnTestData(nextAddend, rp, population, treapPopulation, enluIndividuals, enluLayers));
+        }
+    }
+
+    private int sortUsingTreap2015(int generationId, boolean validate) {
+        final PpsnTestData testData = Objects.requireNonNull(getPreparedTestData().get(generationId),
+                "no cached test data for generation id " + generationId);
+
+        final TreapPopulation tp = testData.getTreapPopulation();
+        tp.addPoint(new Double2DIndividual(testData.getNextAdddend()));
+
+        if (validate)
+            tp.validate();
+
+        return tp.size();
+    }
+
+    private int sortUsingTreap2015(int generationId) {
+        return sortUsingTreap2015(generationId, false);
     }
 
     @Benchmark
-    public int enluTestDataset0() {
-        return sortUsingEnlu(0);
+    public int treap2015Gen0() {
+        return sortUsingTreap2015(0);
     }
 
     @Benchmark
-    public int incPpsnFastSweepDataset0() {
-        return sortOneGeneration(0, incrementalPPSN);
+    public int treap2015Gen10() {
+        return sortUsingTreap2015(10);
     }
 
     @Benchmark
-    public int incPpsnDataset0() {
-        return sortOneGeneration(0, ppsn2014);
+    public int treap2015Gen20() {
+        return sortUsingTreap2015(20);
     }
 
     @Benchmark
-    public int levelPpsnDataset0() {
-        return sortUsingLevelPPSN(0);
+    public int treap2015Gen30() {
+        return sortUsingTreap2015(30);
     }
 
     @Benchmark
-    public int oldPpsnDataset0() {
-        return sortFullyUsingPpsn(0);
+    public int treap2015Gen40() {
+        return sortUsingTreap2015(40);
     }
 
     @Benchmark
-    public int enluTestDataset1() {
-        return sortUsingEnlu(1);
+    public int treap2015Gen50() {
+        return sortUsingTreap2015(50);
     }
 
     @Benchmark
-    public int incPpsnFastSweepDataset1() {
-        return sortOneGeneration(1, incrementalPPSN);
+    public int treap2015Gen60() {
+        return sortUsingTreap2015(60);
     }
 
     @Benchmark
-    public int incPpsnDataset1() {
-        return sortOneGeneration(1, ppsn2014);
+    public int treap2015Gen70() {
+        return sortUsingTreap2015(70);
     }
 
     @Benchmark
-    public int levelPpsnDataset1() {
-        return sortUsingLevelPPSN(1);
+    public int treap2015Gen80() {
+        return sortUsingTreap2015(80);
     }
 
     @Benchmark
-    public int oldPpsnDataset1() {
-        return sortFullyUsingPpsn(1);
-    }
-    
-    @Benchmark
-    public int enluTestDataset2() {
-        return sortUsingEnlu(2);
-    }
-
-    @Benchmark
-    public int incPpsnFastSweepDataset2() {
-        return sortOneGeneration(2, incrementalPPSN);
-    }
-
-    @Benchmark
-    public int incPpsnDataset2() {
-        return sortOneGeneration(2, ppsn2014);
-    }
-
-    @Benchmark
-    public int levelPpsnDataset2() {
-        return sortUsingLevelPPSN(2);
-    }
-
-    @Benchmark
-    public int oldPpsnDataset2() {
-        return sortFullyUsingPpsn(2);
+    public int treap2015Gen90() {
+        return sortUsingTreap2015(90);
     }
 }
