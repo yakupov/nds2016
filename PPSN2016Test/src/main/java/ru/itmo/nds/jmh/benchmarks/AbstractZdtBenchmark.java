@@ -35,13 +35,13 @@ public abstract class AbstractZdtBenchmark extends AbstractDtlzZdtBenchmark {
         for (int i = 0; i <= 90; i += 10) {
             final DoublesGeneration generation = getGeneration(frontStorage, i);
             final double[] nextAddend = generation.getNextAddend();
-            final RankedPopulation rp = generation.getLexSortedRankedPop();
+            final RankedPopulation<double[]> rp = generation.getLexSortedRankedPop();
 
-            final Population population = new Population();
+            final Population<double[]> population = new Population<>(d -> d);
             generation.getFronts().stream()
                     .sorted(Comparator.comparingInt(Front::getId))
                     .map(f -> {
-                        final NonDominationLevel level = new NonDominationLevel();
+                        final NonDominationLevel<double[]> level = new NonDominationLevel<>(d -> d);
                         level.getMembers().addAll(f.getFitnesses());
 
                         (level.getMembers()).sort((o1, o2) -> {

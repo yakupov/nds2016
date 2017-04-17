@@ -24,8 +24,8 @@ import java.util.stream.Collectors;
 @Measurement(iterations = 4)
 @Fork(value = 2)
 public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
-    private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();
-    private final PPSN2014 ppsn2014 = new PPSN2014();
+    private final IncrementalPPSN<double[]> incrementalPPSN = new IncrementalPPSN<>(d -> d);
+    private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
     private Map<Integer, PpsnTestData> preparedTestData;
     private FrontStorage frontStorage;
@@ -52,13 +52,13 @@ public class Uniform_dim3_gs10000_ds1 extends AbstractBenchmark {
         for (int i = 0; i < 3; i++) {
             final DoublesGeneration generation = getGeneration(frontStorage, i);
             final double[] nextAddend = generation.getNextAddend();
-            final RankedPopulation rp = generation.getLexSortedRankedPop();
+            final RankedPopulation<double[]> rp = generation.getLexSortedRankedPop();
 
-            final Population population = new Population();
+            final Population<double[]> population = new Population<>(d -> d);
             generation.getFronts().stream()
                     .sorted(Comparator.comparingInt(Front::getId))
                     .map(f -> {
-                        final NonDominationLevel level = new NonDominationLevel();
+                        final NonDominationLevel<double[]> level = new NonDominationLevel<>(d -> d);
                         level.getMembers().addAll(f.getFitnesses());
 
                         (level.getMembers()).sort((o1, o2) -> {

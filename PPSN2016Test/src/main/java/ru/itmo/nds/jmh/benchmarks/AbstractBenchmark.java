@@ -11,7 +11,7 @@ import ru.itmo.nds.util.RankedPopulation;
 import java.util.*;
 
 public abstract class AbstractBenchmark {
-    private final PPSN2014 ppsn2014 = new PPSN2014();
+    private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
     protected abstract Map<Integer, PpsnTestData> getPreparedTestData();
 
@@ -23,10 +23,10 @@ public abstract class AbstractBenchmark {
                 .orElseThrow(() -> new IllegalArgumentException("Generation " + generationId + " not found in Store"));
     }
 
-    protected int sortOneGeneration(int generationId, PPSN2014 sorter) {
+    protected int sortOneGeneration(int generationId, PPSN2014<double[]> sorter) {
         final PpsnTestData testData = Objects.requireNonNull(getPreparedTestData().get(generationId),
                 "no cached test data for generation id " + generationId);
-        final RankedPopulation res = sorter.performIncrementalNds(testData.getRankedPopulation().getPop(),
+        final RankedPopulation<double[]> res = sorter.performIncrementalNds(testData.getRankedPopulation().getPop(),
                 testData.getRankedPopulation().getRanks(), testData.getNextAdddend());
         return res.getRanks().length;
     }
@@ -34,7 +34,7 @@ public abstract class AbstractBenchmark {
     int sortUsingLevelPPSN(int generationId, boolean debug) {
         final PpsnTestData testData = Objects.requireNonNull(getPreparedTestData().get(generationId),
                 "no cached test data for generation id " + generationId);
-        final Population population = testData.getPopulation();//.copy();
+        final Population<double[]> population = testData.getPopulation();//.copy();
         final int rs = population.addPoint(testData.getNextAdddend());
         if (debug) {
             System.out.println("Stats for " + getClass().getSimpleName() + ", gen " + generationId + ":");

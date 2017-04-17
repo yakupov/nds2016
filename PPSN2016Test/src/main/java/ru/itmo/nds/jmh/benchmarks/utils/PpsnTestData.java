@@ -1,7 +1,6 @@
 package ru.itmo.nds.jmh.benchmarks.utils;
 
 import ru.itmo.nds.layers_ppsn.impl.Population;
-import ru.itmo.nds.reference.treap2015.Treap;
 import ru.itmo.nds.reference.treap2015.TreapPopulation;
 import ru.itmo.nds.util.RankedPopulation;
 
@@ -10,8 +9,8 @@ import java.util.Set;
 
 public class PpsnTestData {
     private final double[] nextAdddend;
-    private final RankedPopulation rankedPopulation;
-    private final Population population;
+    private final RankedPopulation<double[]> rankedPopulation;
+    private final Population<double[]> population;
     private final TreapPopulation treapPopulation;
     private final Set<double[]> enluIndividuals;
     private final List<Set<double[]>> enluLayers;
@@ -27,8 +26,8 @@ public class PpsnTestData {
      * @param enluLayers       For ENLU
      */
     public PpsnTestData(double[] nextAdddend,
-                        RankedPopulation rankedPopulation,
-                        Population population,
+                        RankedPopulation<double[]> rankedPopulation,
+                        Population<double[]> population,
                         TreapPopulation treapPopulation,
                         Set<double[]> enluIndividuals,
                         List<Set<double[]>> enluLayers) {
@@ -44,11 +43,11 @@ public class PpsnTestData {
         return nextAdddend;
     }
 
-    public RankedPopulation getRankedPopulation() {
+    public RankedPopulation<double[]> getRankedPopulation() {
         return rankedPopulation;
     }
 
-    public Population getPopulation() {
+    public Population<double[]> getPopulation() {
         return population;
     }
 
