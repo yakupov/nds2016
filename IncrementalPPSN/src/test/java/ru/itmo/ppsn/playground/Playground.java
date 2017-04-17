@@ -166,7 +166,7 @@ public class Playground {
             System.out.println("\t" + Arrays.toString(d));
         }
 
-        final int[] ranks = new PPSN2014().performNds(copPop);
+        final int[] ranks = new PPSN2014<double[]>(d -> d).performNds(copPop);
 
         System.out.println("After sort: ");
         for (double[] d : copPop) {
@@ -193,7 +193,7 @@ public class Playground {
         }
 
         System.setProperty(PPSN2014.ENABLE_PPSN_TRACE_PROPERTY, "true");
-        final int[] ranks = new PPSN2014().performNds(copPop);
+        final int[] ranks = new PPSN2014<double[]>(d -> d).performNds(copPop);
 
         System.out.println("After sort: ");
         for (double[] d : copPop) {

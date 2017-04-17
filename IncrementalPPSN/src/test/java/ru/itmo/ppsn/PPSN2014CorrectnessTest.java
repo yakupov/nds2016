@@ -14,7 +14,7 @@ import static org.junit.Assert.assertArrayEquals;
 
 public class PPSN2014CorrectnessTest {
     private int[] calculateNds(double[][] input) {
-        return new PPSN2014().performNds(input);
+        return new PPSN2014<double[]>(d -> d).performNds(input);
     }
 
     private void groupCheck(final String title, final double[][] input, int[] output) {
@@ -39,7 +39,7 @@ public class PPSN2014CorrectnessTest {
     private void compareNewAndOld(final double[][] pop) {
         double[][] localPop = new double[pop.length][];
         System.arraycopy(pop, 0, localPop, 0, pop.length);
-        final int[] ranks = new PPSN2014().performNds(localPop);
+        final int[] ranks = new PPSN2014<double[]>(d -> d).performNds(localPop);
 
         System.out.print("Pop:");
         for (double[] d : localPop) {

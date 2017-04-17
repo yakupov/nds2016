@@ -11,7 +11,7 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class LayersIncPPSNCorrectnessTest {
-    private final PPSN2014 ppsn2014 = new PPSN2014();
+    private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
     @Test
     public void test1() {
@@ -24,7 +24,7 @@ public class LayersIncPPSNCorrectnessTest {
 
         final int[] ranks = new int[]{0, 1, 0, 1, 1, 1, 2, 1, 0, 2, 2, 0, 3, 3};
 
-        final Population pop = new Population();
+        final Population<double[]> pop = new Population<>(d -> d);
         for (double[] d: testData) {
             pop.addPoint(d);
         }
@@ -170,7 +170,7 @@ public class LayersIncPPSNCorrectnessTest {
     private void compareIncrementalWithGenerational(final double[][] testData) {
         final int[] ranks = ppsn2014.performNds(testData);
 
-        final Population pop = new Population();
+        final Population<double[]> pop = new Population<>(d -> d);
         for (double[] d: testData) {
             pop.addPoint(d);
         }

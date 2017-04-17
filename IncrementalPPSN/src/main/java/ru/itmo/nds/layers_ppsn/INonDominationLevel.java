@@ -6,11 +6,11 @@ import java.util.List;
 /**
  * Non-domination level
  */
-public interface INonDominationLevel {
+public interface INonDominationLevel<T> {
     /**
      * @return Lexicographically sorted members of this layer
      */
-    List<double[]> getMembers();
+    List<T> getMembers();
 
     /**
      * Add new point (assuming that its rank equals the rank of this level).
@@ -18,7 +18,7 @@ public interface INonDominationLevel {
      * @param addend New point
      * @return A set of evicted points that should be moved to the next level
      */
-    ArrayList<double[]> addMember(double[] addend);
+    ArrayList<T> addMember(T addend);
 
     /**
      * Add new points (assuming that their ranks equal the rank of this level).
@@ -26,15 +26,15 @@ public interface INonDominationLevel {
      * @param addends New points
      * @return A set of evicted points that should be moved to the next level
      */
-    ArrayList<double[]> addMembers(List<double[]> addends);
+    ArrayList<T> addMembers(List<T> addends);
 
     /**
      * @return true if {@code point} is dominated by any member of this layer
      */
-    boolean dominatedByAnyPointOfThisLayer(double[] point);
+    boolean dominatedByAnyPointOfThisLayer(T point);
 
     /**
      * @return Shallow copy of this layer
      */
-    INonDominationLevel copy();
+    INonDominationLevel<T> copy();
 }

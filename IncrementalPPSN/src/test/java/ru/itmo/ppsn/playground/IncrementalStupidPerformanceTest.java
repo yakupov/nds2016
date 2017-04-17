@@ -8,8 +8,8 @@ import ru.itmo.nds.PPSN2014;
 import ru.itmo.nds.util.RankedPopulation;
 
 public class IncrementalStupidPerformanceTest {
-    private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();
-    private final PPSN2014 ppsn2014 = new PPSN2014();
+    private final IncrementalPPSN<double[]> incrementalPPSN = new IncrementalPPSN<>(d -> d);
+    private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
     private final double[][] testPop1 = new double[][] {
             {-819.0, -917.0, -692.0}, {-786.0, -98.0, -268.0}, {-758.0, -2264.0, -655.0}, {-758.0, -515.0, -226.0},

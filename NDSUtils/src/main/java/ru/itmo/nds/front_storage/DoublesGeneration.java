@@ -9,7 +9,7 @@ import java.util.Arrays;
  * Generation of individuals of a type double[]
  */
 public class DoublesGeneration extends Generation<double[]> {
-    public RankedPopulation getLexSortedRankedPop() {
+    public RankedPopulation<double[]> getLexSortedRankedPop() {
         if (getFronts() == null) {
             return null;
         } else {
@@ -40,7 +40,7 @@ public class DoublesGeneration extends Generation<double[]> {
                 }
                 return 0;
             });
-            return new RankedPopulation(pop, sortedRanks);
+            return new RankedPopulation<>(pop, sortedRanks); //TODO: check
         }
     }
 }

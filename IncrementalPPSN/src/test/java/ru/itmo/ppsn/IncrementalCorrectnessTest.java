@@ -11,8 +11,8 @@ import java.util.Arrays;
 import java.util.Random;
 
 public class IncrementalCorrectnessTest {
-    private final IncrementalPPSN incrementalPPSN = new IncrementalPPSN();
-    private final PPSN2014 ppsn2014 = new PPSN2014();
+    private final IncrementalPPSN<double[]> incrementalPPSN = new IncrementalPPSN<>(d -> d);
+    private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
     @Test
     public void test1() {
@@ -175,7 +175,7 @@ public class IncrementalCorrectnessTest {
     }
 
     private void compareIncrementalWithGenerational(final double[][] testData) {
-        RankedPopulation rp = new RankedPopulation(new double[0][], new int[0]);
+        RankedPopulation<double[]> rp = new RankedPopulation<>(new double[0][], new int[0]);
         for (double[] aTestData : testData) {
             rp = incrementalPPSN.performIncrementalNds(rp.getPop(), rp.getRanks(), aTestData);
 

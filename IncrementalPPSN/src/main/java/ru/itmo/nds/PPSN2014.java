@@ -3,7 +3,9 @@ package ru.itmo.nds;
 import ru.itmo.nds.util.RankedPopulation;
 import ru.itmo.util.QuickSelect;
 
+import java.lang.reflect.Array;
 import java.util.*;
+import java.util.function.Function;
 
 import static ru.itmo.nds.util.ComparisonUtils.dominates;
 
@@ -23,7 +25,7 @@ import static ru.itmo.nds.util.ComparisonUtils.dominates;
  * }
  */
 @SuppressWarnings({"UnnecessaryReturnStatement", "Convert2streamapi"})
-public class PPSN2014 {
+public class PPSN2014<T> {
     public static final String ENABLE_PPSN_TRACE_PROPERTY = "ru.itmo.ppsn.trace_to_stdout";
     @SuppressWarnings("WeakerAccess")
     public static final String ENABLE_PPSN_DEBUG_PROPERTY = "ru.itmo.ppsn.debug_on";
@@ -32,8 +34,11 @@ public class PPSN2014 {
     private final boolean debugEnabled;
 
     private final QuickSelect quickSelect = new QuickSelect();
+    private final Function<T, double[]> objectivesExtractor;
 
-    public PPSN2014() {
+    public PPSN2014(Function<T, double[]> objectivesExtractor) {
+        this.objectivesExtractor = objectivesExtractor;
+
         traceToStdout = System.getProperty(ENABLE_PPSN_TRACE_PROPERTY) != null;
         debugEnabled = System.getProperty(ENABLE_PPSN_DEBUG_PROPERTY) != null;
     }
@@ -46,14 +51,15 @@ public class PPSN2014 {
      * @param addend    New point
      * @return New sorted population and its ranks
      */
-    public RankedPopulation performIncrementalNds(final double[][] sortedPop, final int[] ranks, final double[] addend) {
+    public RankedPopulation<T> performIncrementalNds(final T[] sortedPop, final int[] ranks, final T addend) {
+        final double[] addendObjectives = extractObj(addend);
         if (debugEnabled) {
             assert (ranks.length == sortedPop.length);
-            assert (sortedPop.length == 0 || addend.length == sortedPop[0].length);
+            assert (sortedPop.length == 0 || addendObjectives.length == extractObj(sortedPop[0]).length);
         }
 
-        final int dim = addend.length;
-        final double[][] newPop = new double[sortedPop.length + 1][];
+        final int dim = addendObjectives.length;
+        @SuppressWarnings("unchecked") final T[] newPop = (T[]) Array.newInstance(addend.getClass(), sortedPop.length + 1);
         final int[] newRanks = new int[ranks.length + 1];
         final List<Integer> hSet = new ArrayList<>(ranks.length);
         //final List<Integer> lSet = new ArrayList<>(ranks.length);
@@ -62,7 +68,7 @@ public class PPSN2014 {
         int addendIndex = -1;
         int addendRank = 0;
         for (int i = 0; i < sortedPop.length; ++i) {
-            if (addendIndex < 0 && lexCompare(addend, sortedPop[i], dim) <= 0) {
+            if (addendIndex < 0 && lexCompare(addendObjectives, extractObj(sortedPop[i]), dim) <= 0) {
                 addendIndex = writeIndex;
                 newPop[addendIndex] = addend;
                 newRanks[addendIndex] = addendRank;
@@ -73,7 +79,7 @@ public class PPSN2014 {
             newRanks[writeIndex] = ranks[i];
             newPop[writeIndex] = sortedPop[i];
 
-            final int dom = dominates(sortedPop[i], addend, dim);
+            final int dom = dominates(extractObj(sortedPop[i]), addendObjectives, dim);
             if (dom > 0) {
                 hSet.add(writeIndex);
             } else {
@@ -93,10 +99,14 @@ public class PPSN2014 {
         }
 
         //ndHelperB(newPop, newRanks, dim - 1, lSet, hSet, 0);
-        if (ndHelperB(newPop, newRanks, dim - 1, Collections.singletonList(addendIndex), hSet, 0))
-            ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
+        ndHelperB(newPop, newRanks, dim - 1, Collections.singletonList(addendIndex), hSet, 0);
+        ndHelperA(newPop, newRanks, dim - 1, hSet, 0);
 
-        return new RankedPopulation(newPop, newRanks);
+        return new RankedPopulation<>(newPop, newRanks);
+    }
+
+    double[] extractObj(T t) {
+        return objectivesExtractor.apply(t);
     }
 
     /**
@@ -106,22 +116,24 @@ public class PPSN2014 {
      * @param population population
      * @return ranks
      */
-    public int[] performNds(double[][] population) {
+    public int[] performNds(T[] population) {
         if (population == null || population.length == 0)
             return new int[0];
 
         Arrays.sort(population, (o1, o2) -> {
-            for (int i = 0; i < o1.length; ++i) {
-                if (o1[i] < o2[i])
+            final double[] o1Obj = extractObj(o1);
+            final double[] o2Obj = extractObj(o2);
+            for (int i = 0; i < o1Obj.length; ++i) {
+                if (o1Obj[i] < o2Obj[i])
                     return -1;
-                else if (o1[i] > o2[i])
+                else if (o1Obj[i] > o2Obj[i])
                     return 1;
             }
             return 0;
         });
 
         final int[] ranks = new int[population.length];
-        final int k = population[0].length;
+        final int k = extractObj(population[0]).length;
         if (traceToStdout) {
             logToStdout(0, "Performing non-dominating sort with K = " + k);
         }
@@ -130,7 +142,7 @@ public class PPSN2014 {
             return ranks;
         } else if (k == 1) {
             for (int i = 1; i < population.length; ++i) {
-                if (population[i][0] == population[i - 1][0])
+                if (extractObj(population[i])[0] == extractObj(population[i - 1])[0])
                     ranks[i] = ranks[i - 1];
                 else
                     ranks[i] = ranks[i - 1] + 1;
@@ -156,7 +168,7 @@ public class PPSN2014 {
      * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
      * @param level      Recursion level (used for logging)
      */
-    void ndHelperA(double[][] pop, int[] ranks, int k, List<Integer> workingSet, int level) {
+    void ndHelperA(T[] pop, int[] ranks, int k, List<Integer> workingSet, int level) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
             assert (workingSet == null || workingSet.size() <= pop.length);
@@ -170,17 +182,19 @@ public class PPSN2014 {
         if (workingSet == null || workingSet.size() < 2) {
             return;
         } else if (workingSet.size() == 2) {
-            if (dominates(pop[workingSet.get(0)], pop[workingSet.get(1)], k + 1) < 0)
+            if (dominates(extractObj(pop[workingSet.get(0)]),
+                    extractObj(pop[workingSet.get(1)]), k + 1) < 0)
                 ranks[workingSet.get(1)] = Math.max(ranks[workingSet.get(1)], ranks[workingSet.get(0)] + 1);
         } else if (k == 1) {
             sweepA(pop, ranks, workingSet);
         } else {
             Double sKPrev = null;
             for (int index : workingSet) {
-                if (sKPrev != null && sKPrev != pop[index][k]) {
+                final double[] popIndex = extractObj(pop[index]);
+                if (sKPrev != null && sKPrev != popIndex[k]) {
                     final double[] kth = new double[workingSet.size()];
                     for (int i = 0; i < workingSet.size(); ++i) {
-                        kth[i] = pop[workingSet.get(i)][k];
+                        kth[i] = extractObj(pop[workingSet.get(i)])[k];
                     }
                     final double median = quickSelect.getMedian(kth);
                     final List<Integer> l = new ArrayList<>(workingSet.size());
@@ -204,7 +218,7 @@ public class PPSN2014 {
                     ndHelperA(pop, ranks, k, h, level + 1);
                     return;
                 } else {
-                    sKPrev = pop[index][k];
+                    sKPrev = popIndex[k];
                 }
             }
 
@@ -219,7 +233,7 @@ public class PPSN2014 {
      * @param ranks      ranks[i] is the rank of individual pop[i]
      * @param workingSet Indices of the population members that should be analyzed during the current run. Must be sorted.
      */
-    protected void sweepA(double[][] pop, int[] ranks, List<Integer> workingSet) {
+    protected void sweepA(T[] pop, int[] ranks, List<Integer> workingSet) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
             assert (workingSet.size() > 0 && workingSet.size() <= pop.length);
@@ -228,18 +242,18 @@ public class PPSN2014 {
         final TreeSet<IndexedIndividual> secondCoordSet = new TreeSet<>();
         final Map<Integer, Integer> rankToIndex = new HashMap<>();
 
-        secondCoordSet.add(new IndexedIndividual(pop[workingSet.get(0)], workingSet.get(0)));
+        secondCoordSet.add(new IndexedIndividual(extractObj(pop[workingSet.get(0)]), workingSet.get(0)));
         rankToIndex.put(ranks[workingSet.get(0)], workingSet.get(0));
 
         for (int i = 1; i < workingSet.size(); ++i) {
             final int currIndex = workingSet.get(i);
-            final double[] currIndividual = pop[currIndex];
+            final double[] currIndividual = extractObj(pop[currIndex]);
 
             int r = Integer.MIN_VALUE;
             for (IndexedIndividual ii : secondCoordSet.headSet(new IndexedIndividual(currIndividual, currIndex), true)) {
-                final int t = ii.getIndex();
-                if (pop[t][1] < currIndividual[1] || pop[t][1] == currIndividual[1] && pop[t][0] < currIndividual[0]) {
-                    r = Math.max(r, ranks[t]);
+                final double[] popIIIndex = extractObj(pop[ii.getIndex()]);
+                if (popIIIndex[1] < currIndividual[1] || popIIIndex[1] == currIndividual[1] && popIIIndex[0] < currIndividual[0]) {
+                    r = Math.max(r, ranks[ii.getIndex()]);
                 }
             }
             ranks[currIndex] = Math.max(r + 1, ranks[currIndex]);
@@ -248,7 +262,7 @@ public class PPSN2014 {
                     rankToIndex, ranks, ranks[currIndex]);
 
             rankToIndex.put(ranks[currIndex], currIndex);
-            secondCoordSet.add(new IndexedIndividual(pop[currIndex], currIndex));
+            secondCoordSet.add(new IndexedIndividual(extractObj(pop[currIndex]), currIndex));
 
         }
     }
@@ -284,7 +298,7 @@ public class PPSN2014 {
      *
      * @return whether at least one individual has changed its rank
      */
-    boolean ndHelperB(double[][] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
+    boolean ndHelperB(T[] pop, int[] ranks, int k, List<Integer> lSet, List<Integer> hSet, int level) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
         }
@@ -298,8 +312,10 @@ public class PPSN2014 {
         } else if (lSet.size() == 1 || hSet.size() == 1) {
             boolean rankChanged = false;
             for (int h : hSet) {
+                final double[] popH = extractObj(pop[h]);
                 for (int l : lSet) {
-                    if (dominates(pop[l], pop[h], pop[l].length) < 0 && ranks[l] + 1 > ranks[h]) {
+                    final double[] popL = extractObj(pop[l]);
+                    if (dominates(popL, popH, popL.length) < 0 && ranks[l] + 1 > ranks[h]) {
                         ranks[h] = ranks[l] + 1;
                         rankChanged = true;
                     }
@@ -312,15 +328,15 @@ public class PPSN2014 {
             double lMin = Double.POSITIVE_INFINITY;
             double lMax = Double.NEGATIVE_INFINITY;
             for (int l : lSet) {
-                lMin = Math.min(pop[l][k], lMin);
-                lMax = Math.max(pop[l][k], lMax);
+                lMin = Math.min(extractObj(pop[l])[k], lMin);
+                lMax = Math.max(extractObj(pop[l])[k], lMax);
             }
 
             double hMin = Double.POSITIVE_INFINITY;
             double hMax = Double.NEGATIVE_INFINITY;
             for (int h : hSet) {
-                hMin = Math.min(pop[h][k], hMin);
-                hMax = Math.max(pop[h][k], hMax);
+                hMin = Math.min(extractObj(pop[h])[k], hMin);
+                hMax = Math.max(extractObj(pop[h])[k], hMax);
             }
 
             if (lMax <= hMin) {
@@ -328,9 +344,9 @@ public class PPSN2014 {
             } else if (lMin <= hMax) {
                 final double[] kth = new double[hSet.size() + lSet.size()];
                 for (int i = 0; i < lSet.size(); ++i)
-                    kth[i] = pop[lSet.get(i)][k];
+                    kth[i] = extractObj(pop[lSet.get(i)])[k];
                 for (int i = 0; i < hSet.size(); ++i)
-                    kth[lSet.size() + i] = pop[hSet.get(i)][k];
+                    kth[lSet.size() + i] = extractObj(pop[hSet.get(i)])[k];
                 final double median = quickSelect.getMedian(kth);
 
                 final List<Integer> l1 = new ArrayList<>();
@@ -368,7 +384,7 @@ public class PPSN2014 {
      *
      * @return whether at least one individual has changed its rank
      */
-    protected boolean sweepB(double[][] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
+    protected boolean sweepB(T[] pop, int[] ranks, List<Integer> lSet, List<Integer> hSet) {
         if (debugEnabled) {
             assert (pop.length == ranks.length);
         }
@@ -379,20 +395,22 @@ public class PPSN2014 {
         int lIndex = 0;
         boolean rankChanged = false;
         for (int h : hSet) {
-            while (lIndex < lSet.size() && lexCompare(pop[lSet.get(lIndex)], pop[h], 2) <= 0) {
+            final double[] popH = extractObj(pop[h]);
+            while (lIndex < lSet.size() && lexCompare(extractObj(pop[lSet.get(lIndex)]), popH, 2) <= 0) {
                 final int l = lSet.get(lIndex);
-                if (!rankToIndex.containsKey(ranks[l]) || pop[rankToIndex.get(ranks[l])][1] > pop[l][1]) {
-                    cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(pop[l], l), true), rankToIndex, ranks, ranks[l]);
+                final double[] popL = extractObj(pop[l]);
+                if (!rankToIndex.containsKey(ranks[l]) || extractObj(pop[rankToIndex.get(ranks[l])])[1] > popL[1]) {
+                    cleanupTSet(secondCoordSet.tailSet(new IndexedIndividual(popL, l), true), rankToIndex, ranks, ranks[l]);
                     rankToIndex.put(ranks[l], l);
-                    secondCoordSet.add(new IndexedIndividual(pop[l], l));
+                    secondCoordSet.add(new IndexedIndividual(popL, l));
                 }
                 lIndex++;
             }
 
             int r = Integer.MIN_VALUE;
-            for (IndexedIndividual ii : secondCoordSet.headSet(new IndexedIndividual(pop[h], h), true)) {
+            for (IndexedIndividual ii : secondCoordSet.headSet(new IndexedIndividual(popH, h), true)) {
                 final int t = ii.getIndex();
-                if (dominates(pop[t], pop[h], pop[h].length) < 0) {
+                if (dominates(extractObj(pop[t]), popH, popH.length) < 0) {
                     r = Math.max(r, ranks[t]);
                 }
             }
@@ -421,7 +439,7 @@ public class PPSN2014 {
      * @param m           output: p_{@code k} = {@code medianValue}, where p is a member of {@code pop}
      * @param h           output: p_{@code k} > {@code medianValue}, where p is a member of {@code pop}
      */
-    private void split(double[][] pop,
+    private void split(T[] pop,
                        int k,
                        double medianValue,
                        List<Integer> workingSet,
@@ -434,9 +452,10 @@ public class PPSN2014 {
         assert (workingSet != null && workingSet.size() <= pop.length);
 
         for (int i : workingSet) {
-            if (pop[i][k] < medianValue)
+            final double[] ind = extractObj(pop[i]);
+            if (ind[k] < medianValue)
                 l.add(i);
-            else if (pop[i][k] == medianValue)
+            else if (ind[k] == medianValue)
                 m.add(i);
             else
                 h.add(i);

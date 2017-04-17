@@ -1,20 +1,28 @@
 package ru.itmo.iyakupov;
 
 import org.moeaframework.algorithm.NSGAII;
-import org.moeaframework.core.*;
+import org.moeaframework.core.Initialization;
+import org.moeaframework.core.NondominatedSortingPopulation;
+import org.moeaframework.core.Problem;
+import org.moeaframework.core.Solution;
+import org.moeaframework.core.Variation;
 import org.moeaframework.core.comparator.ChainedComparator;
 import org.moeaframework.core.comparator.CrowdingComparator;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.operator.RandomInitialization;
 import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.spi.OperatorFactory;
-import org.moeaframework.util.TypedProperties;
 import ru.itmo.iyakupov.nsga2nds.Individual;
 import ru.itmo.iyakupov.nsga2nds.NSGAIINonDominatingSorter;
+import ru.itmo.iyakupov.ss.IPopulation;
+import ru.itmo.iyakupov.ss.SSNSGAII;
 import ru.itmo.nds.front_storage.DoublesGeneration;
 import ru.itmo.nds.front_storage.Front;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 /**
@@ -50,6 +58,12 @@ public class NSGAIIMoeaRunner {
         final Variation variation = getVariation(problem);
 
         return new NSGAII(problem, population, null, selection, variation, initialization);
+    }
+
+    public static SSNSGAII newSSNSGAII(int populationSize, Problem problem, IPopulation population) {
+        final Initialization initialization = new RandomInitialization(problem, populationSize);
+        final Variation variation = getVariation(problem);
+        return new SSNSGAII(problem, variation, initialization, population);
     }
 
     public static Variation getVariation(Problem problem) {

@@ -1,15 +1,15 @@
 package ru.itmo.nds.util;
 
-public class RankedPopulation {
-    private final double[][] pop;
+public class RankedPopulation<T> {
+    private final T[] pop;
     private final int[] ranks;
 
-    public RankedPopulation(double[][] pop, int[] ranks) {
+    public RankedPopulation(T[] pop, int[] ranks) {
         this.pop = pop;
         this.ranks = ranks;
     }
 
-    public double[][] getPop() {
+    public T[] getPop() {
         return pop;
     }
 

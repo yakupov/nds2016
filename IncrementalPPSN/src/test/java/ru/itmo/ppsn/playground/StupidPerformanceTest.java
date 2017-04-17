@@ -58,7 +58,7 @@ public class StupidPerformanceTest {
 
     private void testNew(double[][] pop, int runs, int warmup) {
         double begin = 0;
-        final PPSN2014 ppsn2014 = new PPSN2014();
+        final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
         for (int cnt = 0; cnt < runs; ++cnt) {
             if (cnt == warmup)
                 begin = System.nanoTime();
