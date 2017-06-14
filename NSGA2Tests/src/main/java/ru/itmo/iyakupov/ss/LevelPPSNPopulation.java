@@ -8,20 +8,10 @@ import org.moeaframework.core.comparator.ObjectiveComparator;
 import ru.itmo.nds.layers_ppsn.INonDominationLevel;
 import ru.itmo.nds.layers_ppsn.impl.Population;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import static org.moeaframework.core.NondominatedSorting.CROWDING_ATTRIBUTE;
 
-/**
- * Created by iyakupov on 17.04.2017.
- * (c) OpenWay Service
- */
 public class LevelPPSNPopulation implements IPopulation {
     private final ru.itmo.nds.layers_ppsn.IPopulation<Solution> population;
     private final Comparator<Solution> comparator;
@@ -33,6 +23,59 @@ public class LevelPPSNPopulation implements IPopulation {
     private LevelPPSNPopulation(ru.itmo.nds.layers_ppsn.IPopulation<Solution> population, Comparator<Solution> comparator) {
         this.population = population;
         this.comparator = comparator;
+    }
+
+    private static class Index {
+        int bucketIndex;
+        int indexInBucket;
+
+        Index(int bucketIndex, int indexInBucket) {
+            this.bucketIndex = bucketIndex;
+            this.indexInBucket = indexInBucket;
+        }
+    }
+
+    private Index binarySearchForBucket(int[] buckets, int value) {
+        int l = 0;
+        int r = buckets.length - 1;
+
+        int bucketIndex = -1;
+        while (true) {
+            final int probe = (l + r) / 2;
+            if (buckets[probe] <= value) {
+                bucketIndex = probe;
+                if (l == probe)
+                    break;
+                l = probe;
+            } else {
+                if (r == probe)
+                    break;
+                r = probe;
+            }
+        }
+
+        return new Index(bucketIndex, value - buckets[bucketIndex]);
+    }
+
+    @Override
+    public List<Solution> getRandomSolutions(int count) {
+        final int[] levelOffsets = new int[population.getLevels().size() + 1];
+        int i = 0;
+        for (INonDominationLevel<Solution> level: population.getLevels()) {
+            levelOffsets[i + 1] = levelOffsets[i] + level.getMembers().size();
+            ++i;
+        }
+        final int totalCount = levelOffsets[population.getLevels().size()];
+
+        final ArrayList<Solution> res = new ArrayList<>();
+        final Random random = new Random(System.nanoTime());
+        for (i = 0; i < count; ++i) {
+            final int indexInPop = random.nextInt(totalCount);
+            final Index index = binarySearchForBucket(levelOffsets, indexInPop);
+            res.add(population.getLevels().get(index.bucketIndex).getMembers().get(index.indexInBucket));
+        }
+
+        return res;
     }
 
     @Override

@@ -63,7 +63,7 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
     }
 
     public Solution generateOffspring() {
-        final List<Solution> mutationCandidates = population.getBestSolutions(2 * variation.getArity());
+        final List<Solution> mutationCandidates = population.getRandomSolutions(2 * variation.getArity());
         //PRNG.shuffle(mutationCandidates);
 
         final Solution[] parents = new Solution[variation.getArity()];

@@ -3,10 +3,14 @@ package ru.itmo.iyakupov.ss;
 
 import org.moeaframework.core.Solution;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 public interface IPopulation {
+    List<Solution> getRandomSolutions(int count);
+
+    @Deprecated
     List<Solution> getBestSolutions(int count);
 
     boolean removeWorstSolution();
