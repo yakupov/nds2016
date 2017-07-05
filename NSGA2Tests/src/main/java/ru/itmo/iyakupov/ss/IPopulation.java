@@ -31,4 +31,27 @@ public interface IPopulation {
         distance = Math.sqrt(distance);
         return distance;
     }
+
+
+    static Index binarySearchForBucket(int[] buckets, int value) {
+        int l = 0;
+        int r = buckets.length - 1;
+
+        int bucketIndex = -1;
+        while (true) {
+            final int probe = (l + r) / 2;
+            if (buckets[probe] <= value) {
+                bucketIndex = probe;
+                if (l == probe)
+                    break;
+                l = probe;
+            } else {
+                if (r == probe)
+                    break;
+                r = probe;
+            }
+        }
+
+        return new Index(bucketIndex, value - buckets[bucketIndex]);
+    }
 }

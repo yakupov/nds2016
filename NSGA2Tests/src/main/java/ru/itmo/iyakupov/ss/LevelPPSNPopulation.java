@@ -25,38 +25,6 @@ public class LevelPPSNPopulation implements IPopulation {
         this.comparator = comparator;
     }
 
-    private static class Index {
-        int bucketIndex;
-        int indexInBucket;
-
-        Index(int bucketIndex, int indexInBucket) {
-            this.bucketIndex = bucketIndex;
-            this.indexInBucket = indexInBucket;
-        }
-    }
-
-    private Index binarySearchForBucket(int[] buckets, int value) {
-        int l = 0;
-        int r = buckets.length - 1;
-
-        int bucketIndex = -1;
-        while (true) {
-            final int probe = (l + r) / 2;
-            if (buckets[probe] <= value) {
-                bucketIndex = probe;
-                if (l == probe)
-                    break;
-                l = probe;
-            } else {
-                if (r == probe)
-                    break;
-                r = probe;
-            }
-        }
-
-        return new Index(bucketIndex, value - buckets[bucketIndex]);
-    }
-
     @Override
     public List<Solution> getRandomSolutions(int count) {
         final int[] levelOffsets = new int[population.getLevels().size() + 1];
@@ -71,7 +39,7 @@ public class LevelPPSNPopulation implements IPopulation {
         final Random random = new Random(System.nanoTime());
         for (i = 0; i < count; ++i) {
             final int indexInPop = random.nextInt(totalCount);
-            final Index index = binarySearchForBucket(levelOffsets, indexInPop);
+            final Index index = IPopulation.binarySearchForBucket(levelOffsets, indexInPop);
             res.add(population.getLevels().get(index.bucketIndex).getMembers().get(index.indexInBucket));
         }
 

@@ -5,7 +5,7 @@ import org.moeaframework.core.Solution;
 import java.util.*;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
-public class TreapPopulation {
+public class TreapPopulationImpl {
     private final Set<Solution> individuals;
     private final List<Treap> ranks;
     private final Random random = new Random();
@@ -14,11 +14,11 @@ public class TreapPopulation {
         return individuals.size();
     }
 
-    public TreapPopulation() {
+    public TreapPopulationImpl() {
         this(new HashSet<>(), new ArrayList<>());
     }
 
-    public TreapPopulation(Set<Solution> individuals, List<Treap> ranks) {
+    public TreapPopulationImpl(Set<Solution> individuals, List<Treap> ranks) {
         this.individuals = individuals;
         this.ranks = ranks;
     }
@@ -55,13 +55,15 @@ public class TreapPopulation {
         return currRank;
     }
 
-    public void addPoint(Solution nInd) {
+    public int addPoint(Solution nInd) {
+        int rank = determineRank(nInd);
+
         if (individuals.contains(nInd)) {
-            return;
+            return rank;
         } else {
             individuals.add(nInd);
         }
-        int rank = determineRank(nInd);
+
         //System.err.println(rank + "_" + nInd.toString() + "_" + ranks.size());
         final Treap nTreap = new Treap(nInd, random.nextInt(), null, null);
 
@@ -70,7 +72,7 @@ public class TreapPopulation {
         } else if (Treap.compareDom(nInd, ranks.get(rank).getMinP()) < 0) {
             ranks.add(rank, nTreap);
             //noinspection UnnecessaryReturnStatement
-            return;
+            return rank;
         } else {
             int i = 0;
             Solution minP = nInd;
@@ -109,6 +111,7 @@ public class TreapPopulation {
                 i++;
             }
         }
+        return rank;
     }
 
     private void printTreap(Treap cNext, boolean sw) {

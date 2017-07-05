@@ -2,10 +2,12 @@ package ru.itmo.iyakupov.ss.treap2015;
 
 import org.moeaframework.core.Solution;
 
+import java.util.Objects;
+
 @SuppressWarnings("WeakerAccess")
 public class Treap {
     public static class Treaps {
-        Treap l, r;
+        public Treap l, r;
 
         public Treaps() {}
 
@@ -20,17 +22,24 @@ public class Treap {
         }
     }
 
-    public Solution x;
-    public int y;
+    public final Solution x;
+    public final int y;
 
     public Treap left;
     public Treap right;
+
+    private final int size;
 
     public Treap(Solution x, int y, Treap left, Treap right) {
         this.x = x;
         this.y = y;
         this.left = left;
         this.right = right;
+
+        int size = 1;
+        if (left != null) size += left.size;
+        if (right != null) size += right.size;
+        this.size = size;
     }
 
     public static Treap merge(Treap l, Treap r) {
@@ -174,6 +183,33 @@ public class Treap {
             right.toString(sb);
     }
 
-    //TODO: size() method
-    //TODO: some sort of ordering. toArray, iterator, get by index or sth else. Or just good random taker
+    public int size() {
+        return size;
+    }
+
+    public Treap getOrdered(int number) {
+        if (number < 0 || number >= size)
+            throw new IllegalArgumentException("Size = " + size + " but " + number + "-th element was requested");
+
+        Treap workingTreap = this;
+        int plusElements = number;
+        while (plusElements > 0) {
+            if (workingTreap.left != null) {
+                if (plusElements == workingTreap.left.size)
+                    return workingTreap;
+                else if (plusElements > workingTreap.left.size) {
+                    plusElements = plusElements - workingTreap.left.size - 1;
+                    workingTreap = workingTreap.right;
+                } else
+                    workingTreap = workingTreap.left;
+            } else {
+                --plusElements;
+                workingTreap = workingTreap.right;
+            }
+
+            Objects.requireNonNull(workingTreap, "Strange situation, add debug output");
+        }
+
+        return workingTreap;
+    }
 }
