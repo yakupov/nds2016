@@ -4,7 +4,6 @@ import org.moeaframework.core.Solution;
 
 import java.util.*;
 
-@SuppressWarnings({"WeakerAccess", "unused"})
 public class TreapPopulationImpl {
     private final Set<Solution> individuals;
     private final List<Treap> ranks;
@@ -18,7 +17,7 @@ public class TreapPopulationImpl {
         this(new HashSet<>(), new ArrayList<>());
     }
 
-    public TreapPopulationImpl(Set<Solution> individuals, List<Treap> ranks) {
+    private TreapPopulationImpl(Set<Solution> individuals, List<Treap> ranks) {
         this.individuals = individuals;
         this.ranks = ranks;
     }
@@ -39,7 +38,7 @@ public class TreapPopulationImpl {
         return currRank;
     }
 
-    protected int determineRank(Solution nInd) {
+    private int determineRank(Solution nInd) {
         int currRank = 0;
         int l = 0;
         int r = ranks.size() - 1;
@@ -87,8 +86,8 @@ public class TreapPopulationImpl {
                 printTreap(cNext, printTreaps);
                 printTreap(ranks.get(rank + i), printTreaps);
 
-                Treap.Treaps t1 = ranks.get(rank + i).splitX(minP);
-                Treap.Treaps tr = new Treap.Treaps();
+                final Treaps t1 = ranks.get(rank + i).splitX(minP);
+                Treaps tr = new Treaps();
                 if (t1.r != null)
                     tr = t1.r.splitY(minP);
 
@@ -98,8 +97,10 @@ public class TreapPopulationImpl {
                 printTreap(tr.r, printTreaps);
 
                 Treap res = Treap.merge(t1.l, cNext);
+                res.verify();
                 printTreap(res, printTreaps);
                 res = Treap.merge(res, tr.r);
+                res.verify();
                 printTreap(res, printTreaps);
                 ranks.set(rank + i, res);
                 cNext = tr.l;
@@ -119,14 +120,7 @@ public class TreapPopulationImpl {
             System.err.println(cNext);
     }
 
-    public IndWithRank getRandWithRank() {
-        if (individuals.size() == 0)
-            throw new RuntimeException("Can't get random individual from empty population");
-        Solution randInd = (Solution) individuals.toArray()[random.nextInt(individuals.size())];
-        return new IndWithRank(randInd, detRankOfExPoint(randInd));
-    }
-
-    protected int detRankOfExPoint(Solution ind) {
+    private int detRankOfExPoint(Solution ind) {
         int r = ranks.size() - 1;
         int l = 0;
         int result = -1;
@@ -166,17 +160,6 @@ public class TreapPopulationImpl {
         throw new RuntimeException("Can't determine rank for " + ind.toString());
     }
 
-
-    protected int detRankOfExPointDumb(Solution ind) {
-        for (int l = 0; l < ranks.size(); ++l) {
-            boolean dominated = ranks.get(l).dominatedBySomebody(ind);
-            boolean dominates = ranks.get(l).dominatesSomebody(ind);
-            if (!dominates && !dominated)
-                return l;
-        }
-        throw new RuntimeException("Can't determine rank for " + ind.toString());
-    }
-
     public String toString() {
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i < ranks.size(); ++i) {
@@ -188,33 +171,9 @@ public class TreapPopulationImpl {
         return sb.toString();
     }
 
-    public void validate() {
-        for (int i = 0; i < ranks.size(); ++i) {
-            checkDom(ranks.get(i), i);
-        }
-    }
-
-    private void checkDom(Treap t, int rk) {
-        if (t == null)
-            return;
-        int cRankCalcd = 0;
-        Solution rankDeterminator = null;
-        for (Solution ind : individuals) {
-            if (ind != t.x) {
-                if (Treap.compareDom(t.x, ind) > 0) { //dominated
-                    int newPossibleRank = detRankOfExPoint(ind) + 1;
-                    if (newPossibleRank > cRankCalcd) {
-                        cRankCalcd = newPossibleRank;
-                        rankDeterminator = ind;
-                    }
-                }
-            }
-        }
-        if (cRankCalcd != rk) {
-            throw new RuntimeException("Population is sorted incorrectly. Point = " + t.x.toString() +
-                    ", rk = " + rk + ", should be = " + cRankCalcd + ", determinator = " + rankDeterminator);
-        }
-        checkDom(t.left, rk);
-        checkDom(t.right, rk);
-    }
+//    public void validate() {
+//        for (int i = 0; i < ranks.size(); ++i) {
+//            checkDom(ranks.get(i), i);
+//        }
+//    }
 }

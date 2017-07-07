@@ -1,32 +1,21 @@
 package ru.itmo.iyakupov.ss.treap2015;
 
+import org.moeaframework.core.Settings;
 import org.moeaframework.core.Solution;
+import org.moeaframework.core.comparator.ObjectiveComparator;
+import ru.itmo.iyakupov.ss.IPopulation;
 
-import java.util.Objects;
+import java.util.*;
+
+import static org.moeaframework.core.NondominatedSorting.CROWDING_ATTRIBUTE;
 
 @SuppressWarnings("WeakerAccess")
 public class Treap {
-    public static class Treaps {
-        public Treap l, r;
+    private final Solution x;
+    private final int y;
 
-        public Treaps() {}
-
-//        public Treaps(Treap l, Treap r) {
-//            super();
-//            this.l = l;
-//            this.r = r;
-//        }
-
-        public String toString() {
-            return "l=" + String.valueOf(l) + ", r=" + String.valueOf(r);
-        }
-    }
-
-    public final Solution x;
-    public final int y;
-
-    public Treap left;
-    public Treap right;
+    private final Treap left;
+    private final Treap right;
 
     private final int size;
 
@@ -47,12 +36,38 @@ public class Treap {
         if (r == null) return l;
 
         if (l.y > r.y) {
-            Treap newR = merge(l.right, r);
-            return new Treap(l.x, l.y, l.left, newR);
+            final Treap newR = merge(l.right, r);
+            final Treap res = new Treap(l.x, l.y, l.left, newR);
+            res.verify();
+            return res;
         } else {
-            Treap newL = merge(l, r.left);
-            return new Treap(r.x, r.y, newL, r.right);
+            final Treap newL = merge(l, r.left);
+            final Treap res = new Treap(r.x, r.y, newL, r.right);
+            res.verify();
+            return res;
         }
+    }
+
+    public List<Solution> toList() {
+        final List<Solution> solutionList = new ArrayList<>();
+        final Queue<Treap> queue = new LinkedList<>();
+        queue.add(this);
+        while (!queue.isEmpty()) {
+            final Treap t = queue.remove();
+            solutionList.add(t.x);
+            if (t.left != null)
+                queue.add(t.left);
+            if (t.right != null)
+                queue.add(t.right);
+        }
+
+        assert (solutionList.size() == size());
+        return solutionList;
+    }
+
+    public void verify() {
+        //assert (toList().size() == size());
+        //unneeded in prod
     }
 
     private static int compareX1(Solution t, Solution o) {
@@ -169,25 +184,36 @@ public class Treap {
         return r.x;
     }
 
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        toString(sb);
+    private String toString(int level) {
+        final StringBuilder sb = new StringBuilder();
+        sb.append("Treap{");
+        sb.append("x=").append(Arrays.toString(x.getObjectives()));
+        sb.append(", y=").append(y).append("\n");
+
+        for (int i = 0; i < level; ++i) sb.append("\t");
+        sb.append(", left=");
+        sb.append(left == null ? null : left.toString(level + 1)).append("\n");
+
+        for (int i = 0; i < level; ++i) sb.append("\t");
+        sb.append(", right=");
+        sb.append(right == null ? null : right.toString(level + 1)).append("\n");
+
+        for (int i = 0; i < level; ++i) sb.append("\t");
+        sb.append(", size=").append(size);
+        sb.append('}');
         return sb.toString();
     }
 
-    protected void toString(StringBuilder sb) {
-        sb.append("[").append(x.toString()).append("]; ");
-        if (left != null)
-            left.toString(sb);
-        if (right != null)
-            right.toString(sb);
+    @Override
+    public String toString() {
+        return toString(0);
     }
 
     public int size() {
         return size;
     }
 
-    public Treap getOrdered(int number) {
+    public Solution getOrdered(int number) {
         if (number < 0 || number >= size)
             throw new IllegalArgumentException("Size = " + size + " but " + number + "-th element was requested");
 
@@ -195,13 +221,13 @@ public class Treap {
         int plusElements = number;
         while (plusElements > 0) {
             if (workingTreap.left != null) {
-                if (plusElements == workingTreap.left.size)
-                    return workingTreap;
-                else if (plusElements > workingTreap.left.size) {
+                if (plusElements > workingTreap.left.size) {
                     plusElements = plusElements - workingTreap.left.size - 1;
                     workingTreap = workingTreap.right;
-                } else
+                } else {
                     workingTreap = workingTreap.left;
+                    --plusElements;
+                }
             } else {
                 --plusElements;
                 workingTreap = workingTreap.right;
@@ -210,6 +236,105 @@ public class Treap {
             Objects.requireNonNull(workingTreap, "Strange situation, add debug output");
         }
 
-        return workingTreap;
+        return workingTreap.x;
+    }
+
+    public Treap updateCrowdingDistance() {
+        final List<Solution> nonDuplicates = new ArrayList<>(size());
+        final Set<Solution> toEvict = new HashSet<>(size());
+
+        final Queue<Treap> queue = new LinkedList<>();
+        queue.add(this);
+        while (!queue.isEmpty()) {
+            final Treap t = queue.remove();
+            if (t.left != null)
+                queue.add(t.left);
+            if (t.right != null)
+                queue.add(t.right);
+
+            final Solution solution = t.x;
+            solution.setAttribute(CROWDING_ATTRIBUTE, 0.0);
+            for (Solution nd: nonDuplicates) {
+                if (IPopulation.distance(nd, solution) < Settings.EPS) {
+                    toEvict.add(solution);
+                    break;
+                }
+            }
+
+            if (!toEvict.contains(solution))
+                nonDuplicates.add(solution);
+        }
+
+        Treap res = this;
+        for (Solution solution : toEvict) {
+            res = res.remove(solution);
+        }
+
+        // then compute the crowding distance for the unique solutions
+        final int n = res.size();
+
+        final List<Solution> front = res.toList();
+        if (n < 3) {
+            for (Solution solution : front)
+                solution.setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
+        } else {
+            final int numberOfObjectives = front.get(0).getNumberOfObjectives();
+            for (int i = 0; i < numberOfObjectives; i++) {
+                front.sort(new ObjectiveComparator(i));
+
+                final double minObjective = front.get(0).getObjective(i);
+                final double maxObjective = front.get(n - 1).getObjective(i);
+
+                front.get(0).setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
+                front.get(n - 1).setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
+
+                for (int j = 1; j < n - 1; j++) {
+                    double distance = (Double)front.get(j).getAttribute(CROWDING_ATTRIBUTE);
+                    distance += (front.get(j + 1).getObjective(i) - front.get(j - 1).getObjective(i)) / (maxObjective - minObjective);
+                    front.get(j).setAttribute(CROWDING_ATTRIBUTE, distance);
+                }
+            }
+        }
+
+        return res;
+    }
+
+    public Treap remove(Solution x) {
+        final Treaps cut = splitX(x);
+
+        if (cut.r.left == null) {
+            cut.r = cut.r.right;
+        } else {
+            final List<Treap> stack = new LinkedList<>();
+            Treap mutant = cut.r;
+            while (mutant.left != null) {
+                if (mutant.left.left == null) {
+                    mutant = new Treap(mutant.x, mutant.y, mutant.left.right, mutant.right);
+                    break;
+                    // System.out.println("!!REMOVED!, now " + mutant.left);
+                } else {
+                    stack.add(mutant);
+                    mutant = mutant.left;
+                }
+            }
+
+            for (int i = stack.size() - 1; i >= 0; --i) {
+                final Treap old = stack.get(i);
+                mutant = new Treap(old.x, old.y, mutant, old.right);
+            }
+
+            cut.r = mutant;
+        }
+        if (cut.l != null) {
+            cut.l.verify();
+        }
+        if (cut.r != null) {
+            cut.r.verify();
+        }
+
+        final Treap res = Treap.merge(cut.l, cut.r);
+        if (res != null)
+            res.verify();
+        return res;
     }
 }
