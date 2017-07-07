@@ -71,7 +71,7 @@ public class ENLUSorter {
         return ranks.size() - 1;
     }
 
-    private void update(Set<double[]> dominatedSet, int i) {
+    private void update(final Set<double[]> dominatedSet, final int i) {
         if (i >= ranks.size()) {
             ranks.add(dominatedSet);
         } else {

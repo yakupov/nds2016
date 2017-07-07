@@ -6,10 +6,7 @@ import org.moeaframework.core.Problem;
 import org.moeaframework.core.Solution;
 import org.moeaframework.problem.DTLZ.DTLZ1;
 import org.moeaframework.problem.ZDT.ZDT1;
-import ru.itmo.iyakupov.ss.IPopulation;
-import ru.itmo.iyakupov.ss.LevelPPSNPopulation;
-import ru.itmo.iyakupov.ss.SSNSGAII;
-import ru.itmo.iyakupov.ss.TreapPopulation;
+import ru.itmo.iyakupov.ss.*;
 import ru.itmo.nds.front_storage.DoublesGeneration;
 import ru.itmo.nds.front_storage.Front;
 import ru.itmo.nds.front_storage.FrontStorage;
@@ -95,6 +92,6 @@ public class GetResultsSS {
     @Ignore
     @Test
     public void nsga2TestZdtTreap() throws Exception {
-        doTest(new ZDT1(), 2, new TreapPopulation());
+        doTest(new ZDT1(), 2, new ENLUPopulation());
     }
 }

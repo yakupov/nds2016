@@ -7,11 +7,34 @@ import org.moeaframework.core.comparator.ObjectiveComparator;
 import ru.itmo.nds.util.ComparisonUtils;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.moeaframework.core.NondominatedSorting.CROWDING_ATTRIBUTE;
 
 public class ENLUPopulation implements IPopulation {
-    private final Set<double[]> individuals;
+    private static class SolutionHolder {
+        private final Solution solution;
+
+        private SolutionHolder(Solution solution) {
+            this.solution = solution;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) return true;
+            if (o == null || getClass() != o.getClass()) return false;
+
+            final SolutionHolder that = (SolutionHolder) o;
+            return Arrays.equals(solution.getObjectives(), that.solution.getObjectives());
+        }
+
+        @Override
+        public int hashCode() {
+            return solution != null ? Arrays.hashCode(solution.getObjectives()) : 0;
+        }
+    }
+
+    private final Set<SolutionHolder> individuals;
     private final List<List<Solution>> ranks;
     private final Comparator<Solution> comparator;
 
@@ -19,7 +42,7 @@ public class ENLUPopulation implements IPopulation {
         this(new HashSet<>(), new ArrayList<>(), new CrowdingComparator());
     }
 
-    private ENLUPopulation(Set<double[]> individuals, List<List<Solution>> ranks, Comparator<Solution> comparator) {
+    private ENLUPopulation(Set<SolutionHolder> individuals, List<List<Solution>> ranks, Comparator<Solution> comparator) {
         this.individuals = individuals;
         this.ranks = ranks;
         this.comparator = comparator;
@@ -67,19 +90,20 @@ public class ENLUPopulation implements IPopulation {
 
     @Override
     public boolean addSolution(Solution nInd) {
-        if (individuals.contains(nInd.getObjectives())) {
+        final SolutionHolder nIndHolder = new SolutionHolder(nInd);
+        if (individuals.contains(nIndHolder)) {
             return false;
         } else {
-            individuals.add(nInd.getObjectives());
+            individuals.add(nIndHolder);
         }
 
         for (int i = 0; i < ranks.size(); ++i) {
             boolean dominates, dominated, nd;
             dominates = dominated = nd = false;
-            final Map<double[], Solution> dominatedSet = new HashMap<>();
+            final Set<SolutionHolder> dominatedSet = new HashSet<>();
 
             for (Solution ind: ranks.get(i)) {
-                int domComparisonResult = ComparisonUtils.dominates(nInd.getObjectives(), ind.getObjectives(), nInd.getObjectives().length);
+                final int domComparisonResult = ComparisonUtils.dominates(nInd.getObjectives(), ind.getObjectives(), nInd.getObjectives().length);
                 //nInd.compareDom(ind);
                 if (domComparisonResult == 0)
                     nd = true;
@@ -87,7 +111,7 @@ public class ENLUPopulation implements IPopulation {
                     dominated = true;
                     break;
                 } else {
-                    dominatedSet.put(ind.getObjectives(), ind);
+                    dominatedSet.add(new SolutionHolder(ind));
                     dominates = true;
                 }
             }
@@ -102,16 +126,18 @@ public class ENLUPopulation implements IPopulation {
                 updateCrowdingDistance(i);
                 return true;
             } else {
-                final List<Solution> updatedRank = new ArrayList<>();
-                final Set<double[]> keySet = dominatedSet.keySet();
-                for (Solution s: ranks.get(i)) {
-                    if (!keySet.contains(s.getObjectives()))
-                        updatedRank.add(s);
+                if (!dominatedSet.isEmpty()) {
+                    final List<Solution> updatedRank = new ArrayList<>();
+                    for (Solution s : ranks.get(i)) {
+                        if (!dominatedSet.contains(new SolutionHolder(s)))
+                            updatedRank.add(s);
+                    }
+                    updatedRank.add(nInd);
+                    ranks.set(i, updatedRank);
+                    update(dominatedSet, i + 1);
+                } else {
+                    ranks.get(i).add(nInd);
                 }
-                updatedRank.add(nInd);
-                ranks.set(i, updatedRank);
-
-                update(dominatedSet, i + 1);
                 updateCrowdingDistance(i);
                 return true;
             }
@@ -143,16 +169,17 @@ public class ENLUPopulation implements IPopulation {
             if (!toEvict.contains(solution))
                 nonDuplicates.add(solution);
         }
-        front.removeAll(toEvict);
 
+        //TODO: faster
+        front.removeAll(toEvict);
+        assert (!front.isEmpty());
 
         // then compute the crowding distance for the unique solutions
-        int n = front.size();
+        final int n = front.size();
 
         if (n < 3) {
             for (Solution solution : front) {
-                solution.setAttribute(CROWDING_ATTRIBUTE,
-                        Double.POSITIVE_INFINITY);
+                solution.setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
             }
         } else {
             int numberOfObjectives = front.get(0).getNumberOfObjectives();
@@ -163,17 +190,12 @@ public class ENLUPopulation implements IPopulation {
                 double minObjective = front.get(0).getObjective(i);
                 double maxObjective = front.get(n - 1).getObjective(i);
 
-                front.get(0).setAttribute(CROWDING_ATTRIBUTE,
-                        Double.POSITIVE_INFINITY);
-                front.get(n - 1).setAttribute(CROWDING_ATTRIBUTE,
-                        Double.POSITIVE_INFINITY);
+                front.get(0).setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
+                front.get(n - 1).setAttribute(CROWDING_ATTRIBUTE, Double.POSITIVE_INFINITY);
 
                 for (int j = 1; j < n - 1; j++) {
-                    double distance = (Double)front.get(j).getAttribute(
-                            CROWDING_ATTRIBUTE);
-                    distance += (front.get(j + 1).getObjective(i) -
-                            front.get(j - 1).getObjective(i))
-                            / (maxObjective - minObjective);
+                    double distance = (Double)front.get(j).getAttribute( CROWDING_ATTRIBUTE);
+                    distance += (front.get(j + 1).getObjective(i) - front.get(j - 1).getObjective(i)) / (maxObjective - minObjective);
                     front.get(j).setAttribute(CROWDING_ATTRIBUTE, distance);
                 }
             }
@@ -181,26 +203,28 @@ public class ENLUPopulation implements IPopulation {
     }
 
 
-    private void update(Map<double[], Solution> dominatedSet, int i) {
+    private void update(Set<SolutionHolder> dominatedSet, int i) {
+        assert (!dominatedSet.isEmpty());
+
+//        System.out.println("Enter update " +i + ", ds.size() " + dominatedSet.size());
+//        new Exception().printStackTrace();
         if (i >= ranks.size()) {
-            ranks.add(new ArrayList<>(dominatedSet.values()));
+            ranks.add(dominatedSet.stream().map(sh -> sh.solution).collect(Collectors.toList()));
         } else {
-            final Map<double[], Solution> newDominatedSet = new HashMap<>();
-            final Set<double[]> keySet = dominatedSet.keySet();
-            for (double[] iNew : keySet) {
+            final Set<SolutionHolder> newDominatedSet = new HashSet<>();
+            for (SolutionHolder iNew : dominatedSet) {
                 for (Solution iOld : ranks.get(i)) {
-                    if (ComparisonUtils.dominates(iNew, iOld.getObjectives(), iNew.length) < 0) {
-                        newDominatedSet.put(iOld.getObjectives(), iOld);
+                    if (ComparisonUtils.dominates(iNew.solution.getObjectives(), iOld.getObjectives(), iNew.solution.getObjectives().length) < 0) {
+                        newDominatedSet.add(new SolutionHolder(iOld));
                     }
                 }
 
                 final List<Solution> newRank = new ArrayList<>();
-                final Set<double[]> newKeySet = newDominatedSet.keySet();
                 for (Solution s : ranks.get(i)) {
-                    if (!newKeySet.contains(s.getObjectives()))
+                    if (!newDominatedSet.contains(new SolutionHolder(s)))
                         newRank.add(s);
                 }
-                newRank.addAll(dominatedSet.values());
+                newRank.add(iNew.solution);
                 ranks.set(i, newRank);
             }
             if (!newDominatedSet.isEmpty())
@@ -223,13 +247,14 @@ public class ENLUPopulation implements IPopulation {
             for (Solution ind : ranks.get(i)) {
                 int rankCalcd = 0;
                 double[] determinator = null;
-                for (double[] compInd : individuals) {
-                    if (compInd != ind.getObjectives() && ComparisonUtils.dominates(compInd, ind.getObjectives(), compInd.length) < 0) {
+                for (SolutionHolder compInd : individuals) {
+                    final double[] objectives = compInd.solution.getObjectives();
+                    if (objectives != ind.getObjectives() && ComparisonUtils.dominates(objectives, ind.getObjectives(), objectives.length) < 0) {
                         //if (compInd != ind && compInd.compareDom(ind) < 0) {
-                        int compRank = detRankOfExPoint(compInd);
+                        int compRank = detRankOfExPoint(objectives);
                         if (compRank + 1 > rankCalcd) {
                             rankCalcd = compRank + 1;
-                            determinator = compInd;
+                            determinator = objectives;
                         }
                     }
                 }

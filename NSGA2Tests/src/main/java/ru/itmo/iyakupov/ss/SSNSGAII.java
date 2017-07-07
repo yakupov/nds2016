@@ -78,8 +78,9 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
 
         final Solution[] initialSolutions = initialization.initialize();
         evaluateAll(initialSolutions);
-        for (Solution s: initialSolutions)
+        for (Solution s: initialSolutions) {
             population.addSolution(s);
+        }
 
         expectedPopSize = initialSolutions.length;
     }

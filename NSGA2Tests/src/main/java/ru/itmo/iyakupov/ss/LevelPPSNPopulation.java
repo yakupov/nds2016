@@ -108,6 +108,7 @@ public class LevelPPSNPopulation implements IPopulation {
             if (!toEvict.contains(solution))
                 nonDuplicates.add(solution);
         }
+        //TODO: faster
         front.removeAll(toEvict);
 
 
