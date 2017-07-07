@@ -5,7 +5,7 @@ import org.moeaframework.core.Solution;
 import java.util.*;
 
 public class TreapPopulationImpl {
-    private final Set<Solution> individuals;
+    private final Set<double[]> individuals;
     private final List<Treap> ranks;
     private final Random random = new Random();
 
@@ -17,7 +17,7 @@ public class TreapPopulationImpl {
         this(new HashSet<>(), new ArrayList<>());
     }
 
-    private TreapPopulationImpl(Set<Solution> individuals, List<Treap> ranks) {
+    private TreapPopulationImpl(Set<double[]> individuals, List<Treap> ranks) {
         this.individuals = individuals;
         this.ranks = ranks;
     }
@@ -57,10 +57,10 @@ public class TreapPopulationImpl {
     public int addPoint(Solution nInd) {
         int rank = determineRank(nInd);
 
-        if (individuals.contains(nInd)) {
+        if (individuals.contains(nInd.getObjectives())) {
             return rank;
         } else {
-            individuals.add(nInd);
+            individuals.add(nInd.getObjectives());
         }
 
         //System.err.println(rank + "_" + nInd.toString() + "_" + ranks.size());
@@ -118,46 +118,6 @@ public class TreapPopulationImpl {
     private void printTreap(Treap cNext, boolean sw) {
         if (sw)
             System.err.println(cNext);
-    }
-
-    private int detRankOfExPoint(Solution ind) {
-        int r = ranks.size() - 1;
-        int l = 0;
-        int result = -1;
-        while (l != r) {
-            int curr = (l + r)/2;
-            if (r == l + 1) {
-                curr = l;
-                boolean dominated = ranks.get(curr).dominatedBySomebody(ind);
-                boolean dominates = ranks.get(curr).dominatesSomebody(ind);
-                if (!dominates && !dominated)
-                    return result < 0 ? curr : Math.min(curr, result);
-
-                curr = r;
-                dominated = ranks.get(curr).dominatedBySomebody(ind);
-                dominates = ranks.get(curr).dominatesSomebody(ind);
-                if (!dominates && !dominated)
-                    return result < 0 ? curr : Math.min(curr, result);
-            } else {
-                boolean dominated = ranks.get(curr).dominatedBySomebody(ind);
-                boolean dominates = ranks.get(curr).dominatesSomebody(ind);
-                if (!dominates && !dominated) {
-                    result = result < 0 ? curr : Math.min(curr, result);
-                    r = curr;
-                } else if (dominates)
-                    r = curr;
-                else
-                    l = curr;
-            }
-        }
-        boolean dominated = ranks.get(l).dominatedBySomebody(ind);
-        boolean dominates = ranks.get(l).dominatesSomebody(ind);
-        if (!dominates && !dominated)
-            result = result < 0 ? l : Math.min(l, result);
-
-        if (result > 0)
-            return result;
-        throw new RuntimeException("Can't determine rank for " + ind.toString());
     }
 
     public String toString() {

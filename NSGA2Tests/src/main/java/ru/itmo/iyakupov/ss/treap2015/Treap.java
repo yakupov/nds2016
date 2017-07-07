@@ -136,17 +136,6 @@ public class Treap {
     }
 
     @SuppressWarnings("RedundantIfStatement")
-    public boolean dominatesSomebody(Solution nInd) {
-        final Treaps split = splitX(nInd);
-        if (split.l != null && compareDom(nInd, split.l.getMax()) < 0)
-            return true;
-        else if (split.r != null && compareDom(nInd, split.r.getMin()) < 0)
-            return true;
-        else
-            return false;
-    }
-
-    @SuppressWarnings("RedundantIfStatement")
     public boolean dominatedBySomebody(Solution nInd) {
         final Treaps split = splitX(nInd);
         //System.err.println("DBS: " + split);

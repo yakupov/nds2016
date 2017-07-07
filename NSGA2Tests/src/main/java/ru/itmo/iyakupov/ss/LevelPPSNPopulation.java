@@ -1,6 +1,5 @@
 package ru.itmo.iyakupov.ss;
 
-import org.moeaframework.core.PRNG;
 import org.moeaframework.core.Settings;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.CrowdingComparator;
@@ -41,23 +40,6 @@ public class LevelPPSNPopulation implements IPopulation {
             final int indexInPop = random.nextInt(totalCount);
             final Index index = IPopulation.binarySearchForBucket(levelOffsets, indexInPop);
             res.add(population.getLevels().get(index.bucketIndex).getMembers().get(index.indexInBucket));
-        }
-
-        return res;
-    }
-
-    @Override
-    public List<Solution> getBestSolutions(int count) {
-        final ArrayList<Solution> res = new ArrayList<>();
-
-        for (INonDominationLevel<Solution> level: population.getLevels()) {
-            final List<Solution> membersCopy = new ArrayList<>(level.getMembers().size());
-            membersCopy.addAll(level.getMembers());
-            PRNG.shuffle(membersCopy);
-            for (Solution s: membersCopy) {
-                if (res.size() >= count) return res;
-                res.add(s);
-            }
         }
 
         return res;

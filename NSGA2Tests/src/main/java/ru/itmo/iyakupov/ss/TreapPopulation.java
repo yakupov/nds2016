@@ -43,11 +43,6 @@ public class TreapPopulation implements IPopulation {
     }
 
     @Override
-    public List<Solution> getBestSolutions(int count) {
-        throw new UnsupportedOperationException("Deprecated");
-    }
-
-    @Override
     public boolean removeWorstSolution() {
         final List<Treap> levels = impl.getRanks();
         if (levels.isEmpty())
