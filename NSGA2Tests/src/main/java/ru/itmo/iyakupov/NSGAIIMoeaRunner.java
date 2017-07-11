@@ -14,7 +14,7 @@ import org.moeaframework.core.operator.TournamentSelection;
 import org.moeaframework.core.spi.OperatorFactory;
 import ru.itmo.iyakupov.nsga2nds.Individual;
 import ru.itmo.iyakupov.nsga2nds.NSGAIINonDominatingSorter;
-import ru.itmo.iyakupov.ss.IPopulation;
+import ru.itmo.iyakupov.ss.pop.IPopulation;
 import ru.itmo.iyakupov.ss.SSNSGAII;
 import ru.itmo.nds.front_storage.DoublesGeneration;
 import ru.itmo.nds.front_storage.Front;

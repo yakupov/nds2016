@@ -10,6 +10,9 @@ import ru.itmo.nds.util.RankedPopulation;
 import java.util.Arrays;
 import java.util.Random;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
+
 public class LayersIncPPSNCorrectnessTest {
     private final PPSN2014<double[]> ppsn2014 = new PPSN2014<>(d -> d);
 
@@ -179,6 +182,36 @@ public class LayersIncPPSNCorrectnessTest {
 
         Assert.assertArrayEquals(testData, rp.getPop());
         Assert.assertArrayEquals(ranks, rp.getRanks());
+    }
+
+    @Test
+    public void test5() {
+        final Population<double[]> pop = new Population<>(d -> d);
+
+        pop.addPoint(new double[]{0.1669424402868558, 0.41123196219828895, 17.98980401569634});
+        assertEquals(1, pop.getLevels().size());
+        assertEquals(1, pop.getLevels().get(0).getMembers().size());
+
+        pop.addPoint(new double[]{0.917634913762617, 0.9778742572218526, 16.9584650345564});
+        assertEquals(1, pop.getLevels().size());
+        assertEquals(2, pop.getLevels().get(0).getMembers().size());
+
+        final double[] p3 = {0.8868046448171203, 0.5802605728140939, 18.793267306998885};
+        pop.addPoint(p3);
+        assertEquals(2, pop.getLevels().size());
+        assertEquals(2, pop.getLevels().get(0).getMembers().size());
+        assertEquals(1, pop.getLevels().get(1).getMembers().size());
+        assertArrayEquals(p3, pop.getLevels().get(1).getMembers().get(0), 0.0);
+
+        pop.addPoint(new double[]{0.40892166575913325, 0.026280324605388206, 21.255937437050655});
+        assertEquals(2, pop.getLevels().size());
+        assertEquals(3, pop.getLevels().get(0).getMembers().size());
+        assertEquals(1, pop.getLevels().get(1).getMembers().size());
+
+        pop.addPoint(new double[]{0.6305014841432228, 0.5990732774500678, 18.139060039219498});
+        assertEquals(2, pop.getLevels().size());
+        assertEquals(3, pop.getLevels().get(0).getMembers().size());
+        assertEquals(2, pop.getLevels().get(1).getMembers().size());
     }
 
 }

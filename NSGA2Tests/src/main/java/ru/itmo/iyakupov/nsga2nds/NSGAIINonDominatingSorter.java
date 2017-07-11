@@ -8,11 +8,11 @@ import java.util.List;
  */
 public class NSGAIINonDominatingSorter {
     public static List<List<Individual>> sort(List<Individual> pop) {
-        final List<List<Individual>> fronts = new ArrayList<List<Individual>>();
+        final List<List<Individual>> fronts = new ArrayList<>();
 
         for (Individual individual: pop) {
             individual.nDominating = 0;
-            individual.dominated = new ArrayList<Individual>();
+            individual.dominated = new ArrayList<>();
         }
 
         for (int i = 0; i < pop.size(); ++i) {
@@ -35,7 +35,7 @@ public class NSGAIINonDominatingSorter {
 
         int currFront = 0;
         while (currFront < fronts.size()) {
-            List<Individual> newFront = new ArrayList<Individual>();
+            List<Individual> newFront = new ArrayList<>();
             for (Individual fromCurrFront : fronts.get(currFront)) {
                 for (Individual dominatedByCurr : fromCurrFront.dominated) {
                     dominatedByCurr.nDominating--;
@@ -61,11 +61,11 @@ public class NSGAIINonDominatingSorter {
      */
     private static void addToFront(List<List<Individual>> fronts, int rank, Individual individual) {
         //System.err.println("ATF " + rank);
-        List<Individual> workingFront = null;
+        final List<Individual> workingFront;
         if (rank <= fronts.size()) {
             workingFront = fronts.get(rank - 1);
         } else {
-            workingFront = new ArrayList<Individual>();
+            workingFront = new ArrayList<>();
             fronts.add(workingFront);
         }
         workingFront.add(individual);

@@ -7,7 +7,9 @@ import org.moeaframework.core.comparator.CrowdingComparator;
 import org.moeaframework.core.comparator.DominanceComparator;
 import org.moeaframework.core.comparator.ParetoDominanceComparator;
 import org.moeaframework.core.operator.TournamentSelection;
+import ru.itmo.iyakupov.ss.pop.IPopulation;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -51,14 +53,14 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
             population.addSolution(generateOffspring());
         }
 
-        if (i == 100)
+        if (i == 100) {
             terminated = true;
+            System.err.println("Failed to generate successful offspring. Iteration stopped.");
+        }
     }
 
     public Solution generateOffspring() {
         final List<Solution> mutationCandidates = population.getRandomSolutions(2 * variation.getArity());
-        //PRNG.shuffle(mutationCandidates);
-
         final Solution[] parents = new Solution[variation.getArity()];
         for (int i = 0; i < mutationCandidates.size() - 1; i += 2) {
             parents[i / 2] = TournamentSelection.binaryTournament(
@@ -80,6 +82,7 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
         evaluateAll(initialSolutions);
         for (Solution s: initialSolutions) {
             population.addSolution(s);
+            //System.out.println(Arrays.toString(s.getObjectives()));
         }
 
         expectedPopSize = initialSolutions.length;

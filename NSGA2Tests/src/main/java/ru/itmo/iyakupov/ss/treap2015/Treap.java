@@ -3,7 +3,7 @@ package ru.itmo.iyakupov.ss.treap2015;
 import org.moeaframework.core.Settings;
 import org.moeaframework.core.Solution;
 import org.moeaframework.core.comparator.ObjectiveComparator;
-import ru.itmo.iyakupov.ss.IPopulation;
+import ru.itmo.iyakupov.ss.pop.IPopulation;
 
 import java.util.*;
 
