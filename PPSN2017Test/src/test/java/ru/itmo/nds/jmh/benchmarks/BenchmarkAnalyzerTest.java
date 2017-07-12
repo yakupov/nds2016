@@ -55,7 +55,7 @@ public class BenchmarkAnalyzerTest {
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
-            if (testClass.sortUsingLevelPPSN(10, false) == 42) {
+            if (testClass.sortUsingLevelPPSN(1000, false) == 42) {
                 break;
             }
         }
@@ -68,7 +68,7 @@ public class BenchmarkAnalyzerTest {
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
-            if (testClass.levelPpsnGen60() == 42) {
+            if (testClass.levelPpsnGen6000() == 42) {
                 break;
             }
         }
@@ -81,7 +81,7 @@ public class BenchmarkAnalyzerTest {
         testClass.prepareTestData();
 
         for (int i = 0; i < 100000; ++i) {
-            if (testClass.incPpsnGen60() == 42) {
+            if (testClass.incPpsnGen6000() == 42) {
                 break;
             }
         }
