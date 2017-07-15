@@ -18,10 +18,9 @@ import java.io.FileOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.DoubleStream;
 
 /**
  * Obtain test data for our NDS
@@ -157,6 +156,111 @@ public class GetResults {
 
             storage.serialize(fos);
         }
+    }
+
+    @Ignore
+    @Test
+    public void generateTwoHyperplanes() throws Exception {
+        final int genSize = 10000;
+        final int datasetCount = 3;
+        final int dim = 3;
+
+        final double offset1 = 5;
+        final double offset2 = 10;
+
+        final String outFileName = "twoLayers" +
+                "_dim" + dim +
+                "_gen" + genSize +
+                ".json";
+
+        final FrontStorage storage = new FrontStorage();
+        if (Files.exists(Paths.get(outFileName))) {
+            try (FileInputStream fis = new FileInputStream(outFileName)) {
+                storage.deserialize(fis);
+            }
+        }
+
+        if (storage.getRunConfigurations() == null)
+            storage.setRunConfigurations(new ArrayList<>());
+
+        try (FileOutputStream fos = new FileOutputStream(outFileName)) {
+            final RunConfiguration rc = new RunConfiguration();
+            rc.setTimestamp(LocalDateTime.now());
+            rc.setNumberOfIterations(0);
+            rc.setSizeOfGeneration(genSize);
+
+            final ArrayList<DoublesGeneration> generations = new ArrayList<>();
+            rc.setGenerations(generations);
+
+            storage.getRunConfigurations().add(rc);
+
+            for (int i = 0; i < datasetCount; ++i) {
+                final DoublesGeneration generation = new DoublesGeneration();
+
+                final Front<double[]> f0 = new Front<>();
+                final List<double[]> fit0 = new ArrayList<>();
+                for (int j = 0; j < genSize / 2; ++j) {
+                    final double[] individual = new double[dim];
+                    Arrays.setAll(individual, value -> Math.random());
+                    final double sum = Arrays.stream(individual).sum();
+                    final double rate = offset1 / sum;
+                    fit0.add(Arrays.stream(individual).map(d -> d * rate).toArray());
+                }
+                fit0.sort((o1, o2) -> {
+                    for (int i1 = 0; i1 < o1.length; ++i1) {
+                        if (o1[i1] < o2[i1])
+                            return -1;
+                        else if (o1[i1] > o2[i1])
+                            return 1;
+                    }
+                    return 0;
+                });
+                f0.setFitnesses(fit0);
+
+                final Front<double[]> f1 = new Front<>();
+                final List<double[]> fit1 = new ArrayList<>();
+                for (int j = 0; j < genSize / 2; ++j) {
+                    final double[] individual = new double[dim];
+                    Arrays.setAll(individual, value -> Math.random());
+                    final double sum = Arrays.stream(individual).sum();
+                    final double rate = offset2 / sum;
+                    fit1.add(Arrays.stream(individual).map(d -> d * rate).toArray());
+                }
+                fit1.sort((o1, o2) -> {
+                    for (int i1 = 0; i1 < o1.length; ++i1) {
+                        if (o1[i1] < o2[i1])
+                            return -1;
+                        else if (o1[i1] > o2[i1])
+                            return 1;
+                    }
+                    return 0;
+                });
+                f1.setId(1);
+                f1.setFitnesses(fit1);
+
+                final List<Front<double[]>> fronts2 = new ArrayList<>();
+                fronts2.add(f0);
+                fronts2.add(f1);
+                generation.setFronts(fronts2);
+
+                final double[] individual = new double[dim];
+                Arrays.fill(individual, Double.POSITIVE_INFINITY);
+                for (double[] doubles : fit0) {
+                    for (int k = 0; k < individual.length; ++k) {
+                        individual[k] = Math.min(individual[k], doubles[k]);
+                    }
+                }
+                individual[0] += 0.0001;
+
+                generation.setNextAddend(individual);
+
+                generation.setId(i);
+                generations.add(generation);
+            }
+
+            storage.serialize(fos);
+        }
+
     }
 
     @Ignore
