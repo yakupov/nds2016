@@ -77,15 +77,17 @@ public class ENLUSorter {
         } else {
             Set<double[]> newDominatedSet = new HashSet<>();
             for (double[] iNew : dominatedSet) {
+                final Set<double[]> lastDom = new HashSet<>();
                 for (double[] iOld : ranks.get(i)) {
                     if (ComparisonUtils.dominates(iNew, iOld, iNew.length) < 0) {
                     //if (iNew.compareDom(iOld) < 0) {
                         //ranks.get(i).remove(iOld);
                         newDominatedSet.add(iOld);
+                        lastDom.add(iOld);
                     }
                 }
-                ranks.get(i).removeAll(newDominatedSet);
-                ranks.get(i).addAll(dominatedSet);
+                ranks.get(i).removeAll(lastDom);
+                ranks.get(i).add(iNew);
             }
             if (!newDominatedSet.isEmpty())
                 update(newDominatedSet, i + 1);
