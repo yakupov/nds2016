@@ -96,10 +96,16 @@ public class GetResults {
 
     @Ignore
     @Test
-    public void generateRandomTestData() throws Exception {
+    public void generateHypercubes() throws Exception {
+        generateHypercube(3);
+        generateHypercube(5);
+        generateHypercube(10);
+        generateHypercube(20);
+    }
+
+    private void generateHypercube(final int dim) throws Exception {
         final int genSize = 10000;
         final int datasetCount = 3;
-        final int dim = 3;
 
         final String outFileName = "uniform" +
                 "_dim" + dim +
@@ -160,10 +166,16 @@ public class GetResults {
 
     @Ignore
     @Test
-    public void generateTwoHyperplanes() throws Exception {
+    public void generateTwoLayersONPoints() throws Exception {
+        generateParallelHyperplanes(3);
+        generateParallelHyperplanes(5);
+        generateParallelHyperplanes(10);
+        generateParallelHyperplanes(20);
+    }
+
+    private void generateParallelHyperplanes(final int dim) throws Exception {
         final int genSize = 10000;
         final int datasetCount = 3;
-        final int dim = 3;
 
         final double offset1 = 5;
         final double offset2 = 10;
@@ -260,15 +272,96 @@ public class GetResults {
 
             storage.serialize(fos);
         }
+    }
 
+    @Ignore
+    @Test
+    public void generateONLayers() throws Exception {
+        generateParallelLines(3);
+        generateParallelLines(5);
+        generateParallelLines(10);
+        generateParallelLines(20);
+    }
+
+    private void generateParallelLines(final int dim) throws Exception {
+        final int genSize = 10000;
+        final int datasetCount = 1;
+
+        final double offset1 = 5;
+        final double offset2 = 10;
+
+        final String outFileName = "twoLines" +
+                "_dim" + dim +
+                "_gen" + genSize +
+                ".json";
+
+        final FrontStorage storage = new FrontStorage();
+        if (Files.exists(Paths.get(outFileName))) {
+            try (FileInputStream fis = new FileInputStream(outFileName)) {
+                storage.deserialize(fis);
+            }
+        }
+
+        if (storage.getRunConfigurations() == null)
+            storage.setRunConfigurations(new ArrayList<>());
+
+        try (FileOutputStream fos = new FileOutputStream(outFileName)) {
+            final RunConfiguration rc = new RunConfiguration();
+            rc.setTimestamp(LocalDateTime.now());
+            rc.setNumberOfIterations(0);
+            rc.setSizeOfGeneration(genSize);
+
+            final ArrayList<DoublesGeneration> generations = new ArrayList<>();
+            rc.setGenerations(generations);
+
+            storage.getRunConfigurations().add(rc);
+
+            for (int i = 0; i < datasetCount; ++i) {
+                final DoublesGeneration generation = new DoublesGeneration();
+                final List<Front<double[]>> fronts2 = new ArrayList<>();
+
+                for (int j = 0; j < genSize / 2; ++j) {
+                    final Front<double[]> f0 = new Front<>();
+                    final List<double[]> fit0 = new ArrayList<>();
+
+                    final int jj = j;
+                    final double[] individual1 = new double[dim];
+                    Arrays.setAll(individual1, value -> (jj + 2) * 2);
+                    individual1[0] = offset1;
+                    fit0.add(individual1);
+
+                    final double[] individual2 = new double[dim];
+                    Arrays.setAll(individual2, value -> (jj + 1) * 2 - 1);
+                    individual2[0] = offset2;
+                    fit0.add(individual2);
+
+                    f0.setFitnesses(fit0);
+                    f0.setId(j);
+                    fronts2.add(f0);
+                }
+
+                generation.setFronts(fronts2);
+
+                final double[] individual = new double[dim];
+                Arrays.fill(individual, 2.0);
+                individual[0] = offset1;
+
+                generation.setNextAddend(individual);
+
+                generation.setId(i);
+                generations.add(generation);
+            }
+
+            storage.serialize(fos);
+        }
     }
 
     @Ignore
     @Test
     public void nsga2TestDtlz1() throws Exception {
-        final int[] dimensions = new int[] {4, 6, 8, 10};
+        final int[] dimensions = new int[]{4, 6, 8, 10};
         final int nDatasets = 2;
-        for (int dim: dimensions) {
+        for (int dim : dimensions) {
             for (int i = 0; i < nDatasets; ++i) {
                 doTest(new DTLZ1(dim), i);
             }

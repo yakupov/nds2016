@@ -71,26 +71,32 @@ public class ENLUSorter {
         return ranks.size() - 1;
     }
 
-    private void update(final Set<double[]> dominatedSet, final int i) {
-        if (i >= ranks.size()) {
-            ranks.add(dominatedSet);
-        } else {
-            Set<double[]> newDominatedSet = new HashSet<>();
-            for (double[] iNew : dominatedSet) {
-                final Set<double[]> lastDom = new HashSet<>();
-                for (double[] iOld : ranks.get(i)) {
-                    if (ComparisonUtils.dominates(iNew, iOld, iNew.length) < 0) {
-                    //if (iNew.compareDom(iOld) < 0) {
-                        //ranks.get(i).remove(iOld);
-                        newDominatedSet.add(iOld);
-                        lastDom.add(iOld);
+    private void update(Set<double[]> dominatedSet, int i) {
+        while (true) {
+            if (i >= ranks.size()) {
+                ranks.add(dominatedSet);
+            } else {
+                final Set<double[]> newDominatedSet = new HashSet<>();
+                for (double[] iNew : dominatedSet) {
+                    final Set<double[]> lastDom = new HashSet<>();
+                    for (double[] iOld : ranks.get(i)) {
+                        if (ComparisonUtils.dominates(iNew, iOld, iNew.length) < 0) {
+                            //if (iNew.compareDom(iOld) < 0) {
+                            //ranks.get(i).remove(iOld);
+                            newDominatedSet.add(iOld);
+                            lastDom.add(iOld);
+                        }
                     }
+                    ranks.get(i).removeAll(lastDom);
+                    ranks.get(i).add(iNew);
                 }
-                ranks.get(i).removeAll(lastDom);
-                ranks.get(i).add(iNew);
+                if (!newDominatedSet.isEmpty()) {
+                    //update(newDominatedSet, i + 1);
+                    ++i;
+                    dominatedSet = newDominatedSet;
+                } else
+                    return;
             }
-            if (!newDominatedSet.isEmpty())
-                update(newDominatedSet, i + 1);
         }
     }
 
