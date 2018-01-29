@@ -45,7 +45,12 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
 
     @Override
     public void iterate() {
-        population.addSolution(generateOffspring());
+        doIterate();
+    }
+
+    public Solution doIterate() {
+        final Solution addend = generateOffspring();
+        population.addSolution(addend);
         population.removeWorstSolution();
 
         int i;
@@ -57,7 +62,9 @@ public class SSNSGAII extends AbstractAlgorithm implements EpsilonBoxEvolutionar
             terminated = true;
             System.err.println("Failed to generate successful offspring. Iteration stopped.");
         }
+        return addend;
     }
+
 
     public Solution generateOffspring() {
         final List<Solution> mutationCandidates = population.getRandomSolutions(2 * variation.getArity());
