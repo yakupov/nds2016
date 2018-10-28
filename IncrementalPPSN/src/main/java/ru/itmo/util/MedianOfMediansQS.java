@@ -1,7 +1,5 @@
 package ru.itmo.util;
 
-import java.util.Arrays;
-
 /**
  * QS using Median of Medians pivot selection strategy
  */

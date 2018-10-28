@@ -14,7 +14,8 @@ public class ComparisonUtils {
      * @return -1 if {@code d1} dominates over {@code d2}. 1 if {@code d2} dominates over {@code d1}. 0 otherwise.
      */
     public static int dominates(double[] d1, double[] d2, int dim) {
-        return dominatesByFirstCoordinates(d1, d2, dim, 0, false, false);
+        return dominatesByFirstCoordinatesV2(d1, d2, dim);
+        //return dominatesByFirstCoordinates(d1, d2, dim, 0, false, false);
     }
 
     /**
@@ -46,6 +47,29 @@ public class ComparisonUtils {
         } else {
             return dominatesByFirstCoordinates(d1, d2, dim, currCoord + 1, d1less, d2less);
         }
+    }
+
+    private static int dominatesByFirstCoordinatesV2(double[] d1, double[] d2, int dim) {
+        boolean d1less = false;
+        boolean d2less = false;
+        for (int currCoord = 0; currCoord < dim; ++currCoord) {
+            if (d1[currCoord] < d2[currCoord]) {
+                d1less = true;
+            } else if (d1[currCoord] > d2[currCoord]) {
+                d2less = true;
+            }
+
+            if (d1less && d2less) {
+                return 0;
+            }
+        }
+
+        if (d1less)
+            return -1;
+        else if (d2less)
+            return 1;
+        else
+            return 0;
     }
 
 }

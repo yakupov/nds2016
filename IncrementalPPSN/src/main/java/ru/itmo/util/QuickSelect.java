@@ -1,9 +1,7 @@
 package ru.itmo.util;
 
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.Random;
-import java.util.function.Function;
 
 /**
  * Simple QS algorithm implementation
